@@ -20,6 +20,11 @@ from pyrogram.errors import FloodWait, UserIsBlocked, MessageNotModified, PeerId
 from utils import is_subscribed, get_size, get_poster, search_gagala, temp, get_settings, save_group_settings, get_tutorial, send_all, get_cap, get_shortlink, get_streamanddownload_shorted_link
 from database.users_chats_db import db, get_referal_users_count
 from database.ia_filterdb import Media, get_file_details, get_search_results, get_bad_files
+from database.config_db import ts_db
+try:
+    from fuzzywuzzy import fuzz, process
+except Exception:
+    fuzz = process = None
 from database.filters_mdb import (
     del_all,
     find_filter,
@@ -153,6 +158,13 @@ async def give_filter(client, message):
 
     # Force subscription is only checked in PM, not in groups
 
+    # --- Top Search Analytics (fire & forget, replies slow नहीं होंगी) ---
+    try:
+        if message.text:
+            asyncio.create_task(ts_db.track_search(message.text))
+    except Exception:
+        pass
+
     # Continue with the original logic if the user is subscribed
     if message.chat.id != SUPPORT_CHAT_ID:
         manual = await manual_filters(client, message)
@@ -179,10 +191,10 @@ async def give_filter(client, message):
                 f"<b>Hey {message.from_user.mention}, {str(total_results)}\n"
                 f"results are found in my database for your query {search}. \n\n"
                 f"This is a support group so you can't get files from here...\n\n"
-                f"Join and Search Here\n - https://t.me/MovieSearchGroupHD \n\n"
+                f"Join and Search Here\n - {GRP_LNK} \n\n"
                 f"आपके द्वारा की गई {search} सर्च में कूल {str(total_results)} मूवीज खोजी गई है।\n\n"
                 f"यह मूवीज रिक्वेस्ट ग्रुप नही हैं तो आप यहां पर मूवीज रिक्वेस्ट नही कर सकते हैं।\n"
-                f"कृपया यहां जुड़ें और खोजें\n - https://t.me/MovieSearchGroupHD</b>"
+                f"कृपया यहां जुड़ें और खोजें\n - {GRP_LNK}</b>"
             )
 
 
@@ -195,14 +207,21 @@ async def pm_text(bot, message):
     
     if content.startswith("/") or content.startswith("#"):
         return  # Ignore commands and hashtags
-        
+
+
+    # --- PM Search Toggle ---
+    # ON हो तो auto_filter चलाओ (PM में search), OFF हो तो purana redirect behavior
+    pm_search = await db.pm_search_status()
+    if pm_search:
+        return await auto_filter(bot, message)
+
     await message.react(emoji="🔥", big=True)
     # Reply to the user
     msgr = await message.reply_text(
-        text=f"<b>ʜᴇʏ {user} 😍 ,\n\nʏᴏᴜ ᴄᴀɴ'ᴛ ɢᴇᴛ ᴍᴏᴠɪᴇs ꜰʀᴏᴍ ʜᴇʀᴇ. ʀᴇǫᴜᴇsᴛ ɪᴛ ɪɴ ᴏᴜʀ <a href=https://t.me/MovieSearchGroupHD>ᴍᴏᴠɪᴇ ɢʀᴏᴜᴘ</a> ᴏʀ ᴄʟɪᴄᴋ ʀᴇǫᴜᴇsᴛ ʜᴇʀᴇ ʙᴜᴛᴛᴏɴ ʙᴇʟᴏᴡ 👇\n\nआप यहां पर मूवीज प्राप्त नहीं कर सकते हैं। कृपया हमारे ग्रुप में रिक्वेस्ट करें। 👇</b>",
+        text=f"<b>ʜᴇʏ {user} 😍 ,\n\nʏᴏᴜ ᴄᴀɴ'ᴛ ɢᴇᴛ ᴍᴏᴠɪᴇs ꜰʀᴏᴍ ʜᴇʀᴇ. ʀᴇǫᴜᴇsᴛ ɪᴛ ɪɴ ᴏᴜʀ <a href={GRP_LNK}>ᴍᴏᴠɪᴇ ɢʀᴏᴜᴘ</a> ᴏʀ ᴄʟɪᴄᴋ ʀᴇǫᴜᴇsᴛ ʜᴇʀᴇ ʙᴜᴛᴛᴏɴ ʙᴇʟᴏᴡ 👇\n\nआप यहां पर मूवीज प्राप्त नहीं कर सकते हैं। कृपया हमारे ग्रुप में रिक्वेस्ट करें। 👇</b>",
         disable_web_page_preview=True,
         reply_markup=InlineKeyboardMarkup([
-            [InlineKeyboardButton("📝 ʀᴇǫᴜᴇsᴛ ʜᴇʀᴇ ♂️", url="https://t.me/MovieSearchGroupHD")]
+            [InlineKeyboardButton("📝 ʀᴇǫᴜᴇsᴛ ʜᴇʀᴇ ♂️", url=GRP_LNK)]
         ])
     )
 
@@ -1446,7 +1465,18 @@ async def cb_handler(client: Client, query: CallbackQuery):
         ident, key = query.data.split("#")
         settings = await get_settings(query.message.chat.id)
         try:
-            if not await db.has_premium_access(clicked) and settings['is_shortlink']: #added premium membership check 
+            if not await db.has_premium_access(clicked):
+                await query.answer()
+                await query.message.reply_text(
+                    "<b>⚠️ Sᴇɴᴅ Aʟʟ ɪs ᴀ Pʀᴇᴍɪᴜᴍ-ᴏɴʟʏ ғᴇᴀᴛᴜʀᴇ.</b>\n\n"
+                    "Pʟᴇᴀsᴇ ʙᴜʏ Pʀᴇᴍɪᴜᴍ ᴛᴏ sᴇɴᴅ ᴀʟʟ ғɪʟᴇs ᴀᴛ ᴏɴᴄᴇ.",
+                    reply_markup=InlineKeyboardMarkup([
+                        [InlineKeyboardButton("💸 Vɪᴇᴡ Pʀᴇᴍɪᴜᴍ Pʟᴀɴs", callback_data="seeplans")]
+                    ]),
+                    quote=True,
+                )
+                return
+            if settings['is_shortlink']:
                 await query.answer(url=f"https://telegram.me/{temp.U_NAME}?start=sendfiles1_{key}")
                 return
             else:
@@ -1971,11 +2001,12 @@ async def cb_handler(client: Client, query: CallbackQuery):
                     InlineKeyboardButton('✇ Jᴏɪɴ Uᴘᴅᴀᴛᴇs Cʜᴀɴɴᴇʟ ✇', url=CHNL_LNK)
                 ]]
         reply_markup = InlineKeyboardMarkup(buttons)
-        await client.edit_message_media(
-            query.message.chat.id, 
-            query.message.id, 
-            InputMediaPhoto(random.choice(PICS))
-        )
+        if query.message.photo:
+            await client.edit_message_media(
+                query.message.chat.id, 
+                query.message.id, 
+                InputMediaPhoto(random.choice(PICS))
+            )
         await query.message.edit_text(
             text=script.START_TXT.format(query.from_user.mention, temp.U_NAME, temp.B_NAME),
             reply_markup=reply_markup,
@@ -2016,7 +2047,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
     elif query.data == "premium_info":
         buttons = [[
-            InlineKeyboardButton('Sʜᴀʀᴇ Uʀ Lɪɴᴋ / Rᴇғғᴇʀ Tᴏ Fʀɪᴇɴᴅs ♂️', url=f'https://t.me/share/url?url=https://telegram.me/{temp.U_NAME}?start=TheCodeflix-{query.from_user.id}')
+            InlineKeyboardButton('Sʜᴀʀᴇ Uʀ Lɪɴᴋ / Rᴇғғᴇʀ Tᴏ Fʀɪᴇɴᴅs ♂️', url=f'https://t.me/share/url?url=https://t.me/{temp.U_NAME}?start=TheCodeflix-{query.from_user.id}')
         ],[
             InlineKeyboardButton('• ꜰʀᴇᴇ ᴛʀɪᴀʟ •', callback_data='give_trial')
         ],[
@@ -2028,7 +2059,13 @@ async def cb_handler(client: Client, query: CallbackQuery):
         reply_markup = InlineKeyboardMarkup(buttons)
         user_referal_count = await get_referal_users_count(query.from_user.id)
         await query.message.edit_text(
-            text=script.SUBSCRIPTION_TXT.format(REFERAL_PREMEIUM_TIME, REFERAL_COUNT, REFERAL_PREMEIUM_TIME, REFERAL_COUNT, temp.U_NAME, query.from_user.id, user_referal_count, REFERAL_COUNT),
+            text=script.SUBSCRIPTION_TXT.format(
+                reward_label=REFERAL_REWARD_LABEL,
+                referral_target=REFERAL_COUNT,
+                referral_count=user_referal_count,
+                bot_username=temp.U_NAME,
+                user_id=query.from_user.id,
+            ),
             reply_markup=reply_markup,
             parse_mode=enums.ParseMode.HTML
         )
@@ -2043,11 +2080,12 @@ async def cb_handler(client: Client, query: CallbackQuery):
         ]]
         
         reply_markup = InlineKeyboardMarkup(buttons)
-        await client.edit_message_media(
-            query.message.chat.id, 
-            query.message.id, 
-            InputMediaPhoto(random.choice(PICS))
-        )
+        if query.message.photo:
+            await client.edit_message_media(
+                query.message.chat.id, 
+                query.message.id, 
+                InputMediaPhoto(random.choice(PICS))
+            )
         await query.message.edit_text(
             text=script.ALL_FILTERS.format(query.from_user.mention),
             reply_markup=reply_markup,
@@ -2058,11 +2096,12 @@ async def cb_handler(client: Client, query: CallbackQuery):
         buttons = [[
             InlineKeyboardButton('⟸ Bᴀᴄᴋ', callback_data='filters')
         ]]
-        await client.edit_message_media(
-            query.message.chat.id, 
-            query.message.id, 
-            InputMediaPhoto(random.choice(PICS))
-        )
+        if query.message.photo:
+            await client.edit_message_media(
+                query.message.chat.id, 
+                query.message.id, 
+                InputMediaPhoto(random.choice(PICS))
+            )
         reply_markup = InlineKeyboardMarkup(buttons)
         await query.message.edit_text(
             text=script.GFILTER_TXT,
@@ -2071,9 +2110,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
         )
     
     elif query.data == "help":
-        buttons = [[
-            InlineKeyboardButton('⚙️ ᴀᴅᴍɪɴ ᴏɴʟʏ ⚙️', callback_data='admin')
-        ],[ 
+        buttons = [[ 
             InlineKeyboardButton('ꜰɪʟᴛᴇʀꜱ', callback_data='filters'),  
             InlineKeyboardButton('ᴄᴏɴɴᴇᴄᴛɪᴏɴꜱ', callback_data='coct') 
         ],[ 
@@ -2083,11 +2120,12 @@ async def cb_handler(client: Client, query: CallbackQuery):
             InlineKeyboardButton('🏠 𝙷𝙾𝙼𝙴 🏠', callback_data='start')
         ]]
         reply_markup = InlineKeyboardMarkup(buttons)
-        await client.edit_message_media(
-            query.message.chat.id, 
-            query.message.id, 
-            InputMediaPhoto(random.choice(PICS))
-        )
+        if query.message.photo:
+            await client.edit_message_media(
+                query.message.chat.id, 
+                query.message.id, 
+                InputMediaPhoto(random.choice(PICS))
+            )
         await query.message.edit_text(
             text=script.HELP_TXT.format(query.from_user.mention),
             reply_markup=reply_markup,
@@ -2101,11 +2139,12 @@ async def cb_handler(client: Client, query: CallbackQuery):
             InlineKeyboardButton('Hᴏᴍᴇ', callback_data='start'),
             InlineKeyboardButton('Cʟᴏsᴇ', callback_data='close_data')
         ]]
-        await client.edit_message_media(
-            query.message.chat.id, 
-            query.message.id, 
-            InputMediaPhoto(random.choice(PICS))
-        )
+        if query.message.photo:
+            await client.edit_message_media(
+                query.message.chat.id, 
+                query.message.id, 
+                InputMediaPhoto(random.choice(PICS))
+            )
         reply_markup = InlineKeyboardMarkup(buttons)
         await query.message.edit_text(
             text=script.ABOUT_TXT.format(temp.B_NAME),
@@ -2174,41 +2213,44 @@ async def cb_handler(client: Client, query: CallbackQuery):
             reply_markup=reply_markup,
             parse_mode=enums.ParseMode.HTML
         )
-    elif query.data == "admin":
-        if query.from_user.id not in ADMINS:
+    elif query.data in ("admin", "cmd_admin"):
+        if query.data == "cmd_admin" and query.from_user.id != OWNERID:
+            return await query.answer("⚠️ ᴏɴʟʏ ᴛʜᴇ ʙᴏᴛ ᴏᴡɴᴇʀ ᴄᴀɴ ᴜsᴇ ᴛʜɪs !", show_alert=True)
+        if query.data == "admin" and query.from_user.id not in ADMINS:
             return await query.answer("⚠️ ʏᴏᴜ'ʀᴇ ɴᴏᴛ ᴀ ʙᴏᴛ ᴀᴅᴍɪɴ !", show_alert=True)        
         buttons = [[
-            InlineKeyboardButton('⟸ Bᴀᴄᴋ', callback_data='help'),
-            InlineKeyboardButton('ᴇxᴛʀᴀ', callback_data='extra')
+            InlineKeyboardButton('⬅️ Bᴀᴄᴋ', callback_data='help' if query.data == "admin" else 'start'),
+            InlineKeyboardButton('Nᴇxᴛ ➡️', callback_data='extra' if query.data == "admin" else 'cmd_extra')
         ]]
-        await client.edit_message_media(
-            query.message.chat.id, 
-            query.message.id, 
-            InputMediaPhoto(random.choice(PICS))
-        )
         reply_markup = InlineKeyboardMarkup(buttons)
-        await query.message.edit_text(
-            text=script.ADMIN_TXT,
-            reply_markup=reply_markup,
-            parse_mode=enums.ParseMode.HTML
-        )
+        if query.data == "cmd_admin":
+            await query.message.edit_text(script.ADMIN_TXT, reply_markup=reply_markup, parse_mode=enums.ParseMode.HTML)
+        else:
+            await client.edit_message_media(query.message.chat.id, query.message.id, InputMediaPhoto(random.choice(PICS)))
+            await query.message.edit_text(text=script.ADMIN_TXT, reply_markup=reply_markup, parse_mode=enums.ParseMode.HTML)
 
     
-    elif query.data == "extra":
+    elif query.data in ("extra", "cmd_extra"):
+        if query.data == "cmd_extra" and query.from_user.id != OWNERID:
+            return await query.answer("⚠️ ᴏɴʟʏ ᴛʜᴇ ʙᴏᴛ ᴏᴡɴᴇʀ ᴄᴀɴ ᴜsᴇ ᴛʜɪs !", show_alert=True)
         buttons = [[
-            InlineKeyboardButton('⟸ Bᴀᴄᴋ', callback_data='admin')
+            InlineKeyboardButton('⬅️ Bᴀᴄᴋ', callback_data='admin' if query.data == "extra" else 'cmd_admin'),
+            InlineKeyboardButton('Nᴇxᴛ ➡️', callback_data='cmd_third' if query.data == "cmd_extra" else 'extra')
         ]]
-        await client.edit_message_media(
-            query.message.chat.id, 
-            query.message.id, 
-            InputMediaPhoto(random.choice(PICS))
-        )
         reply_markup = InlineKeyboardMarkup(buttons)
-        await query.message.edit_text(
-            text=script.EXTRA_TXT,
-            reply_markup=reply_markup,
-            parse_mode=enums.ParseMode.HTML
-        )
+        if query.data == "cmd_extra":
+            await query.message.edit_text(script.EXTRA_TXT, reply_markup=reply_markup, parse_mode=enums.ParseMode.HTML)
+        else:
+            await client.edit_message_media(query.message.chat.id, query.message.id, InputMediaPhoto(random.choice(PICS)))
+            await query.message.edit_text(text=script.EXTRA_TXT, reply_markup=reply_markup, parse_mode=enums.ParseMode.HTML)
+    elif query.data == "cmd_third":
+        if query.from_user.id != OWNERID:
+            return await query.answer("⚠️ ᴏɴʟʏ ᴛʜᴇ ʙᴏᴛ ᴏᴡɴᴇʀ ᴄᴀɴ ᴜsᴇ ᴛʜɪs !", show_alert=True)
+        buttons = [[
+            InlineKeyboardButton('⬅️ Bᴀᴄᴋ', callback_data='cmd_extra'),
+            InlineKeyboardButton('Cʟᴏsᴇ ↕️', callback_data='close_data')
+        ]]
+        await query.message.edit_text(script.THIRD_TXT, reply_markup=InlineKeyboardMarkup(buttons), parse_mode=enums.ParseMode.HTML)
     elif query.data == "stats":
         buttons = [[
             InlineKeyboardButton('⟸ Bᴀᴄᴋ', callback_data='help'),
@@ -2532,8 +2574,37 @@ username_pattern = re.compile(r'@\w+', re.IGNORECASE)
 url_pattern = re.compile(r'(http[s]?://)?(?:[a-zA-Z0-9-]+\.)+[a-zA-Z]{2,6}(?:/[^\\s]*)?', re.IGNORECASE)
 non_english_pattern = re.compile(r'[^a-zA-Z0-9\s\':.)(]')  #Respond only English characters & digits and ( ' & : ) contains messages. others ignore and delete immediately.
 
+async def ai_spell_check(search_query, max_diff=80):
+    """Rx AI Spell Check — fuzzy match query against indexed file names (>=80%)."""
+    try:
+        if process is None or not search_query or len(search_query.strip()) < 3:
+            return None
+        first_word = search_query.split()[0]
+        pattern = re.escape(first_word)
+        motor_col = getattr(Media, "collection", None)
+        if motor_col is None:
+            motor_col = Media.get_motor_collection()  # umongo motor alternative
+        cursor = motor_col.find(
+            {"file_name": {"$regex": pattern, "$options": "i"}},
+            {"file_name": 1}
+        ).limit(300)
+        candidates = set()
+        async for doc in cursor:
+            name = (doc.get("file_name") or "")
+            name = name.split(" ll ")[0].strip()  # metadata tail हटाओ (purane + नए दोनों format)
+            if name:
+                candidates.add(name)
+        if not candidates:
+            return None
+        best = process.extractOne(search_query, list(candidates), scorer=fuzz.token_set_ratio)
+        if best and best[1] >= max_diff:
+            return best[0]
+    except Exception:
+        logger.exception("ai_spell_check failed")
+    return None
+
+
 async def auto_filter(client, msg, spoll=False, spell_chok=True, **kwargs):
-    print(kwargs)
     curr_time = datetime.now(pytz.timezone('Asia/Kolkata')).time()
 
     if not spoll:
@@ -2614,6 +2685,13 @@ async def auto_filter(client, msg, spoll=False, spell_chok=True, **kwargs):
             if not files:
                 if settings["spell_check"] and spell_chok:
                     sts = await m.edit(f"<b><i> 𝖲𝖾𝖺𝗋𝖼𝗁𝗂𝗇𝗀 𝖿𝗈𝗋 '{search}' 🔎</i></b>")
+                    # --- AI Spell Check: fuzzy re-search (>=80% match) ---
+                    og_name = kwargs.get("movie_name") or message.text
+                    suggestion = await ai_spell_check(search)
+                    if suggestion and suggestion.strip().lower() != search.strip().lower():
+                        await sts.edit(f"<b><i>𝘿𝙞𝙙 𝙮𝙤𝙪 𝙢𝙚𝙖𝙣 '{suggestion}' ? 🔎\n𝖲𝖾𝖺𝗋𝖼𝗁𝗂𝗇𝗀 𝖺𝗀𝖺𝗂𝗇...</i></b>")
+                        msg.text = suggestion
+                        return await auto_filter(client=client, msg=msg, spell_chok=False, movie_name=og_name)
                     return await advantage_spell_chok(client, msg, sts, movie_name=search)
                 else:
                     dup_search = message.text
@@ -2643,41 +2721,27 @@ async def auto_filter(client, msg, spoll=False, spell_chok=True, **kwargs):
     FRESH[key] = search
     temp.GETALL[key] = files
     temp.SHORT[message.from_user.id] = message.chat.id
+    btn = []
     if settings["button"]:
         btn = [
             [
                 InlineKeyboardButton(
-                   text=f"🚦{get_size(file.file_size)}》{' '.join(filter(lambda x: not x.startswith('[') and not x.startswith('@') and not x.startswith('www.'), file.file_name.split()))}", callback_data=f'{pre}#{file.file_id}'
-                ),
+                    text=f"🚦{get_size(file.file_size)}》{' '.join(filter(lambda x: not x.startswith('[') and not x.startswith('@') and not x.startswith('www.'), file.file_name.split()))}",
+                    callback_data=f'{pre}#{file.file_id}',
+                )
             ]
             for file in files
         ]
-        btn.insert(0, 
-            [
-                InlineKeyboardButton(f'ǫᴜᴀʟɪᴛʏ', callback_data=f"qualities#{key}"),
-                InlineKeyboardButton("ᴇᴘɪsᴏᴅᴇs", callback_data=f"episodes#{key}"),
-                InlineKeyboardButton("sᴇᴀsᴏɴs",  callback_data=f"seasons#{key}")
-            ]
-        )
-        btn.insert(0, [
-            InlineKeyboardButton("𝐒𝐞𝐧𝐝 𝐀𝐥𝐥", callback_data=f"sendfiles#{key}"),
-            InlineKeyboardButton("ʟᴀɴɢᴜᴀɢᴇs", callback_data=f"languages#{key}"),
-            InlineKeyboardButton("ʏᴇᴀʀs", callback_data=f"years#{key}")
-        ])
-    else:
-        btn = []
-        btn.insert(0, 
-            [
-                InlineKeyboardButton(f'ǫᴜᴀʟɪᴛʏ', callback_data=f"qualities#{key}"),
-                InlineKeyboardButton("ᴇᴘɪsᴏᴅᴇs", callback_data=f"episodes#{key}"),
-                InlineKeyboardButton("sᴇᴀsᴏɴs",  callback_data=f"seasons#{key}")
-            ]
-        )
-        btn.insert(0, [
-            InlineKeyboardButton("𝐒𝐞𝐧𝐝 𝐀𝐥𝐥", callback_data=f"sendfiles#{key}"),
-            InlineKeyboardButton("ʟᴀɴɢᴜᴀɢᴇs", callback_data=f"languages#{key}"),
-            InlineKeyboardButton("ʏᴇᴀʀs", callback_data=f"years#{key}")
-        ])
+    btn.insert(0, [
+        InlineKeyboardButton("𝐒𝐞𝐧𝐝 𝐀𝐥𝐥", callback_data=f"sendfiles#{key}"),
+        InlineKeyboardButton("ʟᴀɴɢᴜᴀɢᴇs", callback_data=f"languages#{key}"),
+        InlineKeyboardButton("ʏᴇᴀʀs", callback_data=f"years#{key}")
+    ])
+    btn.insert(1, [
+        InlineKeyboardButton('ǫᴜᴀʟɪᴛʏ', callback_data=f"qualities#{key}"),
+        InlineKeyboardButton("ᴇᴘɪsᴏᴅᴇs", callback_data=f"episodes#{key}"),
+        InlineKeyboardButton("sᴇᴀsᴏɴs", callback_data=f"seasons#{key}")
+    ])
     if offset != "":
         req = message.from_user.id if message.from_user else 0
         try:

@@ -8,7 +8,7 @@
 import re
 from pymongo.errors import DuplicateKeyError
 import motor.motor_asyncio
-from info import DATABASE_NAME, CUSTOM_FILE_CAPTION, DATABASE_URI, IMDB, IMDB_TEMPLATE, MELCOW_NEW_USERS, P_TTI_SHOW_OFF, SINGLE_BUTTON, SPELL_CHECK_REPLY, PROTECT_CONTENT, AUTO_DELETE, MAX_BTN, AUTO_FFILTER, SHORTLINK_API, SHORTLINK_URL, IS_SHORTLINK, TUTORIAL, IS_TUTORIAL
+from info import DATABASE_NAME, CUSTOM_FILE_CAPTION, DATABASE_URI, IMDB, IMDB_TEMPLATE, MELCOW_NEW_USERS, P_TTI_SHOW_OFF, SINGLE_BUTTON, SPELL_CHECK_REPLY, PROTECT_CONTENT, AUTO_DELETE, MAX_BTN, AUTO_FFILTER, SHORTLINK_API, SHORTLINK_URL, IS_SHORTLINK, TUTORIAL, IS_TUTORIAL, PM_SEARCH
 import datetime
 import pytz
 import time
@@ -298,7 +298,7 @@ class Database:
 
     async def get_expired(self, current_time):
         expired_users = []
-        if data := self.users.find({"expiry_time": {"$lt": current_time}}):
+        if data := self.users.find({"expiry_time": {"$ne": None, "$lt": current_time}}):
             async for user in data:
                 expired_users.append(user)
         return expired_users
@@ -328,6 +328,28 @@ class Database:
         remaining_time = expiry_time - datetime.datetime.now()
         return remaining_time
 
+
+    async def pm_search_status(self):
+        config = await self.db.pm_search.find_one({'_id': 'status'})
+        if config is not None:
+            return bool(config.get('status', PM_SEARCH))
+        return PM_SEARCH
+
+    async def update_pm_search_status(self, status):
+        await self.db.pm_search.update_one(
+            {'_id': 'status'},
+            {'$set': {'status': bool(status)}},
+            upsert=True
+        )
+
+    async def add_redeem_code(self, code, time_str):
+        await self.db.redeem_codes.insert_one({"code": code, "time": time_str, "used": False})
+
+    async def get_redeem_code(self, code):
+        return await self.db.redeem_codes.find_one({"code": code, "used": False})
+
+    async def mark_redeem_code_used(self, code):
+        await self.db.redeem_codes.update_one({"code": code}, {"$set": {"used": True}})
 
     async def all_premium_users(self):
         count = await self.users.count_documents({

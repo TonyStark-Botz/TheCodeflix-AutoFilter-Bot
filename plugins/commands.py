@@ -17,7 +17,7 @@ from pyrogram.errors import ChatAdminRequired, FloodWait
 from pyrogram.types import *
 from database.ia_filterdb import Media, get_file_details, unpack_new_file_id, get_bad_files
 from database.users_chats_db import db, delete_all_referal_users, get_referal_users_count, get_referal_all_users, referal_add_user
-from info import CHANNELS, ADMINS, AUTH_CHANNEL, LOG_CHANNEL, PICS, BATCH_FILE_CAPTION, CUSTOM_FILE_CAPTION, PROTECT_CONTENT, CHNL_LNK, GRP_LNK, DISCLAIMER_LNK, REQST_CHANNEL, SUPPORT_CHAT_ID, SUPPORT_CHAT_LNK, MAX_B_TN, VERIFY, SHORTLINK_API, SHORTLINK_URL, TUTORIAL, IS_TUTORIAL, PREMIUM_USER, VERIFY_TUTORIAL, SECOND_AUTH_CHANNEL, THIRD_AUTH_CHANNEL, LOG_CHANNEL_V, REFERAL_PREMEIUM_TIME, REFERAL_COUNT, LOG_CHANNEL_RQ, MEDIATOR_BOT, MIDVERIFY
+from info import CHANNELS, ADMINS, OWNERID, AUTH_CHANNEL, LOG_CHANNEL, PICS, BATCH_FILE_CAPTION, CUSTOM_FILE_CAPTION, PROTECT_CONTENT, CHNL_LNK, GRP_LNK, DISCLAIMER_LNK, REQST_CHANNEL, SUPPORT_CHAT_ID, SUPPORT_CHAT_LNK, MAX_B_TN, VERIFY, SHORTLINK_API, SHORTLINK_URL, TUTORIAL, IS_TUTORIAL, PREMIUM_USER, VERIFY_TUTORIAL, SECOND_AUTH_CHANNEL, THIRD_AUTH_CHANNEL, LOG_CHANNEL_V, REFERAL_PREMEIUM_TIME, REFERAL_REWARD_LABEL, REFERAL_COUNT, LOG_CHANNEL_RQ, MEDIATOR_BOT, MIDVERIFY
 from utils import get_settings, get_size, save_group_settings, temp, verify_user, check_token, check_verification, get_seconds, get_token, get_shortlink, get_tutorial, get_poster, is_subscribed
 from database.connections_mdb import active_connection
 from .join_req import FSUB_CHANNELS
@@ -45,6 +45,19 @@ logging.basicConfig(level=logging.ERROR)
 
 
 BATCH_FILES = {}
+
+
+@Client.on_message(filters.command("cmd") & filters.user(OWNERID))
+async def owner_command_panel(client, message):
+    buttons = [[
+        InlineKeyboardButton('⬅️ Bᴀᴄᴋ', callback_data='start'),
+        InlineKeyboardButton('Nᴇxᴛ ➡️', callback_data='cmd_extra')
+    ]]
+    await message.reply_text(
+        script.ADMIN_TXT,
+        reply_markup=InlineKeyboardMarkup(buttons),
+        parse_mode=enums.ParseMode.HTML
+    )
 
 @Client.on_message(filters.command("start") & filters.incoming)
 async def start(client, message):
@@ -99,7 +112,7 @@ async def start(client, message):
             InlineKeyboardButton('✇ Jᴏɪɴ Uᴘᴅᴀᴛᴇs Cʜᴀɴɴᴇʟ ✇', url=CHNL_LNK)
         ]]
         reply_markup = InlineKeyboardMarkup(buttons)
-        m = await message.reply_sticker("CAACAgUAAxkBAAEKVaxlCWGs1Ri6ti45xliLiUeweCnu4AACBAADwSQxMYnlHW4Ls8gQMAQ")
+        m = await message.reply_sticker("CAACAgUAAxkBAAEHAgABaqfq5DA2pFSbgQLDpLKjju6Lt-gAAgEAA8EkMTFM5ZVqKsDWbz0E")
         await asyncio.sleep(1)
         await m.delete()
         await message.reply_photo(
@@ -231,14 +244,14 @@ async def start(client, message):
             num_referrals = await get_referal_users_count(user_id)
             await client.send_message(chat_id = user_id, text = "<b>{} start the bot with your referral link\n\nTotal Referals - {}</b>".format(message.from_user.mention, num_referrals))
             if num_referrals == REFERAL_COUNT:
-                time = REFERAL_PREMEIUM_TIME       
+                time = REFERAL_PREMEIUM_TIME
                 seconds = await get_seconds(time)
                 if seconds > 0:
                     expiry_time = datetime.datetime.now() + datetime.timedelta(seconds=seconds)
                     user_data = {"id": user_id, "expiry_time": expiry_time} 
                     await db.update_user(user_data)  # Use the update_user method to update or insert user data
                     await delete_all_referal_users(user_id)
-                    await client.send_message(chat_id = user_id, text = "<b>You Have Successfully Completed Total Referal.\n\nYou Added In Premium For {}</b>".format(REFERAL_PREMEIUM_TIME))
+                    await client.send_message(chat_id=user_id, text=f"<b>You Have Successfully Completed Total Referral.\n\nYou Added In Premium For {REFERAL_REWARD_LABEL}.</b>")
                     return 
         else:
             buttons = [[
@@ -1368,3 +1381,22 @@ async def stop_button(bot, message):
 ## 𝑻𝑮 𝑨𝒅𝒖𝒍𝒕 𝑪𝒐𝒎𝒎𝒖𝒏𝒊𝒕𝒚: https://t.me/MyStudy_Hub
 ## 𝑨𝒍𝒍 𝑻𝑮 𝑩𝒐𝒕'𝒔 𝑼𝒑𝒅𝒂𝒕𝒆𝒔: https://t.me/LiveCraftBots
 ###============================================================###
+
+
+@Client.on_message(filters.command("pm_search") & filters.user(ADMINS))
+async def set_pm_search(client, message):
+    if len(message.command) == 2:
+        option = message.command[1].lower()
+        if option in ("on", "true", "1", "yes"):
+            await db.update_pm_search_status(True)
+            await message.reply_text("<b>✅ PM Search enabled.</b>\n\nअब users bot ke PM में search कर सकते हैं।")
+        elif option in ("off", "false", "0", "no"):
+            await db.update_pm_search_status(False)
+            await message.reply_text("<b>❌ PM Search disabled.</b>\n\nअब users को group में redirect किया जाएगा।")
+        else:
+            await message.reply_text("<b>♻ Usage: <code>/pm_search on</code> ya <code>/pm_search off</code></b>")
+    else:
+        status = await db.pm_search_status()
+        await message.reply_text(
+            f"<b>PM Search अभी: {'ON ✅' if status else 'OFF ❌'}\n\nUsage: <code>/pm_search on</code> ya <code>/pm_search off</code></b>"
+        )

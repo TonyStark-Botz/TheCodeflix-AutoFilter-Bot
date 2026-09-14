@@ -1,11 +1,15 @@
-FROM python:3.10-slim-bullseye
+FROM python:3.10-slim-bookworm
 
-RUN apt update && apt upgrade -y
-RUN apt install git -y
-COPY requirements.txt /requirements.txt
+ENV PYTHONUNBUFFERED=1 \
+    PIP_NO_CACHE_DIR=1
 
-RUN pip3 install -U pip && pip3 install -U -r requirements.txt
-RUN mkdir /RX-AUTOFILER2
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends git ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
+
 WORKDIR /RX-AUTOFILER2
+COPY requirements.txt /RX-AUTOFILER2/requirements.txt
+RUN pip install --upgrade pip && pip install -r requirements.txt
+
 COPY . /RX-AUTOFILER2
 CMD ["python", "bot.py"]

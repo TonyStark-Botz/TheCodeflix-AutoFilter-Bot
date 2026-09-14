@@ -14,46 +14,115 @@ logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 lock = asyncio.Lock()
 semaphore = asyncio.Semaphore(60)  # Limit concurrent tasks
+pending_index_requests = {}
+active_index_request = None
+
+
+def skip_summary(skip):
+    return f"0-{skip - 1}" if skip else "none"
+
+
+async def ask_for_skip(message, request):
+    pending_index_requests[request["requester_id"]] = request
+    await message.reply_text(
+        "<b>How many messages should be skipped before indexing?</b>\n\n"
+        "Send a number, or send <code>0</code> to skip nothing."
+    )
+
+
+async def show_index_confirmation(message, request):
+    skip = request["skip"]
+    text = (
+        "<b>Confirm file indexing</b>\n\n"
+        f"Chat ID: <code>{request['chat_id']}</code>\n"
+        f"Source username: @{request['chat_username']}\n"
+        f"Requested by: @{request['requester_username']}\n"
+        f"Last message ID: <code>{request['last_msg_id']}</code>\n"
+        f"Skipped message IDs: <code>{skip_summary(skip)}</code>\n"
+        f"Skip count: <code>{skip}</code>"
+    )
+    buttons = InlineKeyboardMarkup([
+        [InlineKeyboardButton("✅ Confirm", callback_data=f"indexconfirm#{request['requester_id']}")],
+        [InlineKeyboardButton("❌ Cancel", callback_data=f"indexcancel#{request['requester_id']}")],
+    ])
+    await message.reply_text(text, reply_markup=buttons)
 
 @Client.on_callback_query(filters.regex(r'^index'))
 async def index_files(bot, query):
     if query.data.startswith('index_cancel'):
         temp.CANCEL = True
         return await query.answer("Cancelling Indexing")
+    if query.data.startswith('indexconfirm#'):
+        requester_id = int(query.data.split('#', 1)[1])
+        if query.from_user.id != requester_id and query.from_user.id not in ADMINS:
+            return await query.answer("You are not allowed to confirm this request.", show_alert=True)
+        request = pending_index_requests.get(requester_id)
+        if not request:
+            return await query.answer("This indexing request has expired.", show_alert=True)
+        if lock.locked():
+            return await query.answer('Wait until previous process complete.', show_alert=True)
+        pending_index_requests.pop(requester_id, None)
+        global active_index_request
+        active_index_request = requester_id
+        await query.answer('Indexing started.')
+        await query.message.edit(
+            "Starting Indexing",
+            reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton('Cancel', callback_data='index_cancel')]])
+        )
+        await index_files_to_db(request["last_msg_id"], request["chat_id"], query.message, bot, request["skip"])
+        active_index_request = None
+        return
+    if query.data.startswith('indexcancel#'):
+        requester_id = int(query.data.split('#', 1)[1])
+        if query.from_user.id != requester_id and query.from_user.id not in ADMINS:
+            return await query.answer("You are not allowed to cancel this request.", show_alert=True)
+        pending_index_requests.pop(requester_id, None)
+        await query.answer('Indexing cancelled.')
+        await query.message.edit('Indexing cancelled.')
+        return
     _, raju, chat, lst_msg_id, from_user = query.data.split("#")
+    if query.from_user.id not in ADMINS:
+        return await query.answer("Only admins can approve indexing requests.", show_alert=True)
     if raju == 'reject':
+        pending_index_requests.pop(int(from_user), None)
         await query.message.delete()
         await bot.send_message(int(from_user),
                                f'Your Submission for indexing {chat} has been declined by our moderators.',
                                reply_to_message_id=int(lst_msg_id))
         return
 
-    if lock.locked():
-        return await query.answer('Wait until previous process complete.', show_alert=True)
-    msg = query.message
-
-    await query.answer('Processing...⏳', show_alert=True)
-    if int(from_user) not in ADMINS:
-        await bot.send_message(int(from_user),
-                               f'Your Submission for indexing {chat} has been accepted by our moderators and will be added soon.',
-                               reply_to_message_id=int(lst_msg_id))
-    await msg.edit(
-        "Starting Indexing",
-        reply_markup=InlineKeyboardMarkup(
-            [[InlineKeyboardButton('Cancel', callback_data='index_cancel')]]
-        )
+    request = pending_index_requests.get(int(from_user))
+    if not request:
+        return await query.answer('This indexing request has expired.', show_alert=True)
+    await query.answer('Accepted. Asking for skip number.')
+    await bot.send_message(
+        int(from_user),
+        "<b>Your indexing request was accepted.</b>\n\n"
+        "How many messages should be skipped before indexing?\n"
+        "Send a number, or send <code>0</code> to skip nothing."
     )
+
+
+@Client.on_message(filters.private & filters.text & filters.incoming)
+async def receive_index_skip(bot, message):
+    pending = pending_index_requests.get(message.from_user.id)
+    if not pending or not pending.get("awaiting_skip"):
+        return
     try:
-        chat = int(chat)
-    except:
-        chat = chat
-    await index_files_to_db(int(lst_msg_id), chat, msg, bot)
+        skip = int(message.text.strip())
+        if skip < 0:
+            raise ValueError
+    except (ValueError, AttributeError):
+        return await message.reply_text("Send a non-negative number, or send <code>0</code> to skip nothing.")
+    pending["skip"] = skip
+    pending["awaiting_skip"] = False
+    await show_index_confirmation(message, pending)
 
 
-@Client.on_message((filters.forwarded | (filters.regex("(https://)?(t\.me/|telegram\.me/|telegram\.dog/)(c/)?(\d+|[a-zA-Z_0-9]+)/(\d+)$")) & filters.text ) & filters.private & filters.incoming)
+@Client.on_message((filters.forwarded | (filters.regex(r"(https://)?(t\.me/|telegram\.me/|telegram\.dog/)(c/)?(\d+|[a-zA-Z_0-9]+)/(\d+)$")) & filters.text ) & filters.private & filters.incoming)
 async def send_for_index(bot, message):
     if message.text:
-        regex = re.compile("(https://)?(t\.me/|telegram\.me/|telegram\.dog/)(c/)?(\d+|[a-zA-Z_0-9]+)/(\d+)$")
+        regex = re.compile(r"(https://)?(t\.me/|telegram\.me/|telegram\.dog/)(c/)?(\d+|[a-zA-Z_0-9]+)/(\d+)$")
         match = regex.match(message.text)
         if not match:
             return await message.reply('Invalid link')
@@ -67,7 +136,7 @@ async def send_for_index(bot, message):
     else:
         return
     try:
-        await bot.get_chat(chat_id)
+        chat_info = await bot.get_chat(chat_id)
     except ChannelInvalid:
         return await message.reply('This may be a private channel / group. Make me an admin over there to index the files.')
     except (UsernameInvalid, UsernameNotModified):
@@ -82,20 +151,17 @@ async def send_for_index(bot, message):
     if k.empty:
         return await message.reply('This may be a group and I am not an admin of the group.')
 
+    request = {
+        "chat_id": chat_id,
+        "last_msg_id": last_msg_id,
+        "requester_id": message.from_user.id,
+        "requester_username": message.from_user.username or "No username",
+        "chat_username": getattr(chat_info, "username", None) or "No username",
+        "skip": 0,
+        "awaiting_skip": True,
+    }
     if message.from_user.id in ADMINS:
-        buttons = [
-            [
-                InlineKeyboardButton('Yes',
-                                     callback_data=f'index#accept#{chat_id}#{last_msg_id}#{message.from_user.id}')
-            ],
-            [
-                InlineKeyboardButton('Close', callback_data='close_data'),
-            ]
-        ]
-        reply_markup = InlineKeyboardMarkup(buttons)
-        return await message.reply(
-            f'Do you want to index this channel/group?\n\nChat ID/Username: <code>{chat_id}</code>\nLast Message ID: <code>{last_msg_id}</code>',
-            reply_markup=reply_markup)
+        return await ask_for_skip(message, request)
 
     if type(chat_id) is int:
         try:
@@ -121,21 +187,7 @@ async def send_for_index(bot, message):
     await message.reply('Thank you for the contribution. Wait for my moderators to verify the files.')
 
 
-@Client.on_message(filters.command('setskip') & filters.user(ADMINS))
-async def set_skip_number(bot, message):
-    if ' ' in message.text:
-        _, skip = message.text.split(" ")
-        try:
-            skip = int(skip)
-        except:
-            return await message.reply("Skip number should be an integer.")
-        await message.reply(f"Successfully set SKIP number as {skip}")
-        temp.CURRENT = int(skip)
-    else:
-        await message.reply("Give me a skip number")
-
-
-async def index_files_to_db(lst_msg_id, chat, msg, bot):
+async def index_files_to_db(lst_msg_id, chat, msg, bot, skip):
     total_files = 0
     duplicate = 0
     errors = 0
@@ -144,9 +196,9 @@ async def index_files_to_db(lst_msg_id, chat, msg, bot):
     unsupported = 0
     async with lock:
         try:
-            current = temp.CURRENT
+            current = skip
             temp.CANCEL = False
-            async for message in bot.iter_messages(chat, lst_msg_id, temp.CURRENT):
+            async for message in bot.iter_messages(chat, lst_msg_id, skip):
                 if temp.CANCEL:
                     await msg.edit(f"Successfully Cancelled!!\n\nSaved <code>{total_files}</code> files to database!\nDuplicate Files Skipped: <code>{duplicate}</code>\nDeleted Messages Skipped: <code>{deleted}</code>\nNon-Media messages skipped: <code>{no_media + unsupported}</code> (Unsupported Media - `{unsupported}`)\nErrors Occurred: <code>{errors}</code>")
                     break

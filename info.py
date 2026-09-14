@@ -7,10 +7,19 @@
 
 import re
 import os
-from os import environ,getenv
+from os import environ
 from Script import script 
 
 id_pattern = re.compile(r'^.\d+$')
+
+
+def env_bool(name, default):
+    value = environ.get(name)
+    if value is None:
+        return default
+    return value.strip().lower() in {"true", "yes", "1", "enable", "y", "on"}
+
+
 def is_enabled(value, default):
     if value.lower() in ["true", "yes", "1", "enable", "y"]:
         return True
@@ -39,6 +48,12 @@ CROSS_BOT_USERNAME = environ.get('CROSS_BOT_USERNAME', '')
 # Administrators and owner profile
 ADMINS = [int(admin) if id_pattern.search(admin) else admin for admin in environ.get('ADMINS', '8526412924').split()]
 OWNER_LNK = environ.get('OWNER_LNK', 'https://t.me/TonyStark_Botz')
+OWNERID = environ.get('OWNERID', '')
+OWNERID = int(OWNERID) if OWNERID and id_pattern.search(OWNERID) else ADMINS[0]
+if OWNERID not in ADMINS:
+    ADMINS.append(OWNERID)
+# PM Search toggle (True = users can search in PM, False = purana group-redirect behavior)
+PM_SEARCH = environ.get('PM_SEARCH', 'True').lower() in ('true', '1', 'yes', 'on')
 # Authorized Users
 auth_users = [int(user) if id_pattern.search(user) else user for user in environ.get('AUTH_USERS', '').split()]
 AUTH_USERS = (auth_users + ADMINS) if auth_users else []
@@ -51,8 +66,9 @@ CHANNELS = [int(ch) if id_pattern.search(ch) else ch for ch in environ.get('CHAN
 # Premium User List
 PREMIUM_USER = [int(user) if id_pattern.search(user) else user for user in environ.get('PREMIUM_USER', '').split()]
 # Referral System
-REFERAL_COUNT = int(environ.get('REFERAL_COUNT', '10')) # number of referral count
-REFERAL_PREMEIUM_TIME = environ.get('REFERAL_PREMEIUM_TIME', '1_Month')
+REFERAL_COUNT = int(environ.get('REFERAL_COUNT', '7')) # number of referral count
+REFERAL_PREMEIUM_TIME = environ.get('REFERAL_PREMEIUM_TIME', '7day')
+REFERAL_REWARD_LABEL = environ.get('REFERAL_REWARD_LABEL', '7 days')
 # Premium Media & Images
 QR_CODE = (environ.get('QR_CODE', 'https://i.ibb.co/WWz5mVnn/photo-2026-01-07-02-31-49-7592456191582666768.jpg'))
 UPI_ID = environ.get('UPI_ID', 'kanus-network@axl')
@@ -63,8 +79,8 @@ SUBSCRIPTION = (environ.get('SUBSCRIPTION', 'https://graph.org/file/35323f5f7bb9
 # Force Subscription System
 # ============================================================
 # Force Join Settings
-JOINREQ_MSG = bool(environ.get('JOINREQ_MSG', False))
-ASKFSUBINGRP = bool(environ.get('ASKFSUBINGRP', False))
+JOINREQ_MSG = env_bool('JOINREQ_MSG', False)
+ASKFSUBINGRP = env_bool('ASKFSUBINGRP', False)
 # Primary Auth Channel
 auth_channel = environ.get('AUTH_CHANNEL', '-1002090374492')
 AUTH_CHANNEL = int(auth_channel) if auth_channel and id_pattern.search(auth_channel) else None
@@ -109,7 +125,7 @@ SUPPORT_CHAT_LNK = environ.get('SUPPORT_CHAT_LNK', 'https://t.me/TheCodeflixSupp
 reqst_channel = environ.get('REQST_CHANNEL_ID', '-1002321570567')
 REQST_CHANNEL = int(reqst_channel) if reqst_channel and id_pattern.search(reqst_channel) else None
 # New Movie Update Channel
-SEND_MV_LOGS = bool(environ.get('SEND_MV_LOGS', True))
+SEND_MV_LOGS = env_bool('SEND_MV_LOGS', True)
 MV_UPDATE_CHANNEL = int(environ.get('MV_UPDATE_CHANNEL', '-1002412021360'))
 
 # ============================================================
@@ -127,9 +143,9 @@ COLLECTION_NAME = environ.get('COLLECTION_NAME', 'tgfiles')
 # Link Shortener System
 # ============================================================
 # Verification Settings
-VERIFY = bool(environ.get('VERIFY', False))
-MIDVERIFY = bool(environ.get('MIDVERIFY', False))
-IS_SHORTLINK = bool(environ.get('IS_SHORTLINK', False))
+VERIFY = env_bool('VERIFY', False)
+MIDVERIFY = env_bool('MIDVERIFY', False)
+IS_SHORTLINK = env_bool('IS_SHORTLINK', False)
 
 # First Shortlink Provider
 SHORTLINK_URL = environ.get('FIRST_SHORTLINK_URL', 'vplink.in')
@@ -145,7 +161,7 @@ THIRD_SHORTLINK_API = environ.get('THIRD_SHORTLINK_API', '1349b288c4e18748db3e35
 THIRD_VERIFY_TUTORIAL = environ.get('THIRD_VERIFY_TUTORIAL', 'https://t.me/Movies_4_Download/633')
 
 # Stream Shortlink Provider
-IS_SREAM_SHORTLINK = bool(environ.get('IS_SREAM_SHORTLINK', False))
+IS_SREAM_SHORTLINK = env_bool('IS_SREAM_SHORTLINK', False)
 STREAM_SITE = (environ.get('STREAM_SITE', ''))
 STREAM_API = (environ.get('STREAM_API', ''))
 STREAMHTO = (environ.get('STREAMHTO', 'https://t.me/Movies_4_Download/633'))
@@ -172,14 +188,14 @@ IMDB_TEMPLATE = environ.get("IMDB_TEMPLATE", f"{script.IMDB_TEMPLATE_TXT}")
 MSG_ALRT = environ.get('MSG_ALRT', 'Hello My Dear Friends ❤️')
 # Tutorial & Verification Links
 TUTORIAL = environ.get('TUTORIAL', 'https://t.me/Movies_4_Download/633')
-IS_TUTORIAL = bool(environ.get('IS_TUTORIAL', True))
+IS_TUTORIAL = env_bool('IS_TUTORIAL', True)
 # Time & Cache Settings
 CACHE_TIME = int(environ.get('CACHE_TIME', 300))
 # Filter & Search Settings
-USE_CAPTION_FILTER = bool(environ.get('USE_CAPTION_FILTER', False))
+USE_CAPTION_FILTER = env_bool('USE_CAPTION_FILTER', False)
 AUTO_FFILTER = is_enabled((environ.get('AUTO_FFILTER', "True")), True)
 SPELL_CHECK_REPLY = is_enabled(environ.get("SPELL_CHECK_REPLY", "True"), True)
-NO_RESULTS_MSG = bool(environ.get("NO_RESULTS_MSG", True))
+NO_RESULTS_MSG = env_bool('NO_RESULTS_MSG', True)
 # Button & Display Settings
 SINGLE_BUTTON = is_enabled((environ.get('SINGLE_BUTTON', "True")), True)
 MAX_BTN = is_enabled((environ.get('MAX_BTN', "True")), True)

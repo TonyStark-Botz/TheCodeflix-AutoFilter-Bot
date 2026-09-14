@@ -12,6 +12,7 @@ import logging
 import secrets
 import time
 import mimetypes
+from urllib.parse import quote
 from aiohttp.http_exceptions import BadStatusLine
 from lazybot import multi_clients, work_loads, LazyPrincessBot
 from util.exceptions import FIleNotFound, InvalidHash
@@ -24,6 +25,18 @@ from info import *
 
 routes = web.RouteTableDef()
 
+
+def parse_stream_path(path, request):
+    match = re.search(r"^([a-zA-Z0-9_-]{6})(\d+)$", path)
+    if match:
+        return int(match.group(2)), match.group(1)
+
+    id_match = re.search(r"(\d+)(?:/\S+)?", path)
+    secure_hash = request.rel_url.query.get("hash")
+    if not id_match or not secure_hash:
+        raise web.HTTPBadRequest(text="Invalid streaming URL")
+    return int(id_match.group(1)), secure_hash
+
 @routes.get("/", allow_head=True)
 async def root_route_handler(request):
     return web.json_response("BenFilterBot")
@@ -33,13 +46,7 @@ async def root_route_handler(request):
 async def stream_handler(request: web.Request):
     try:
         path = request.match_info["path"]
-        match = re.search(r"^([a-zA-Z0-9_-]{6})(\d+)$", path)
-        if match:
-            secure_hash = match.group(1)
-            id = int(match.group(2))
-        else:
-            id = int(re.search(r"(\d+)(?:\/\S+)?", path).group(1))
-            secure_hash = request.rel_url.query.get("hash")
+        id, secure_hash = parse_stream_path(path, request)
         return web.Response(text=await render_page(id, secure_hash), content_type='text/html')
     except InvalidHash as e:
         raise web.HTTPForbidden(text=e.message)
@@ -56,13 +63,7 @@ async def stream_handler(request: web.Request):
 async def stream_handler(request: web.Request):
     try:
         path = request.match_info["path"]
-        match = re.search(r"^([a-zA-Z0-9_-]{6})(\d+)$", path)
-        if match:
-            secure_hash = match.group(1)
-            id = int(match.group(2))
-        else:
-            id = int(re.search(r"(\d+)(?:\/\S+)?", path).group(1))
-            secure_hash = request.rel_url.query.get("hash")
+        id, secure_hash = parse_stream_path(path, request)
         return await media_streamer(request, id, secure_hash)
     except InvalidHash as e:
         raise web.HTTPForbidden(text=e.message)
@@ -78,7 +79,7 @@ async def stream_handler(request: web.Request):
 class_cache = {}
 
 async def media_streamer(request: web.Request, id: int, secure_hash: str):
-    range_header = request.headers.get("Range", 0)
+    range_header = request.headers.get("Range")
     
     index = min(work_loads, key=work_loads.get)
     faster_client = multi_clients[index]
@@ -104,17 +105,35 @@ async def media_streamer(request: web.Request, id: int, secure_hash: str):
     file_size = file_id.file_size
 
     if range_header:
-        from_bytes, until_bytes = range_header.replace("bytes=", "").split("-")
-        from_bytes = int(from_bytes)
-        until_bytes = int(until_bytes) if until_bytes else file_size - 1
-    else:
-        from_bytes = request.http_range.start or 0
-        until_bytes = (request.http_range.stop or file_size) - 1
+        range_match = re.fullmatch(r"bytes=(\d*)-(\d*)", range_header.strip())
+        if not range_match or (not range_match.group(1) and not range_match.group(2)):
+            return web.Response(
+                status=416,
+                text="416: Range not satisfiable",
+                headers={"Content-Range": f"bytes */{file_size}"},
+            )
 
-    if (until_bytes > file_size) or (from_bytes < 0) or (until_bytes < from_bytes):
+        range_start, range_end = range_match.groups()
+        if range_start:
+            from_bytes = int(range_start)
+            until_bytes = int(range_end) if range_end else file_size - 1
+        else:
+            suffix_length = int(range_end)
+            from_bytes = max(file_size - suffix_length, 0)
+            until_bytes = file_size - 1
+    else:
+        from_bytes = 0
+        until_bytes = file_size - 1
+
+    if (
+        file_size <= 0
+        or from_bytes < 0
+        or from_bytes >= file_size
+        or until_bytes < from_bytes
+    ):
         return web.Response(
             status=416,
-            body="416: Range not satisfiable",
+            text="416: Range not satisfiable",
             headers={"Content-Range": f"bytes */{file_size}"},
         )
 
@@ -126,7 +145,7 @@ async def media_streamer(request: web.Request, id: int, secure_hash: str):
     last_part_cut = until_bytes % chunk_size + 1
 
     req_length = until_bytes - from_bytes + 1
-    part_count = math.ceil(until_bytes / chunk_size) - math.floor(offset / chunk_size)
+    part_count = ((until_bytes - offset) // chunk_size) + 1
     body = tg_connect.yield_file(
         file_id, index, offset, first_part_cut, last_part_cut, part_count, chunk_size
     )
@@ -143,20 +162,30 @@ async def media_streamer(request: web.Request, id: int, secure_hash: str):
                 file_name = f"{secrets.token_hex(2)}.unknown"
     else:
         if file_name:
-            mime_type = mimetypes.guess_type(file_id.file_name)
+            mime_type = mimetypes.guess_type(file_name)[0]
         else:
             mime_type = "application/octet-stream"
             file_name = f"{secrets.token_hex(2)}.unknown"
 
-    return web.Response(
+    mime_type = mime_type or "application/octet-stream"
+    headers = {
+        "Content-Type": mime_type,
+        "Content-Length": str(req_length),
+        "Content-Disposition": f"{disposition}; filename*=UTF-8''{quote(file_name)}",
+        "Accept-Ranges": "bytes",
+    }
+    if range_header:
+        headers["Content-Range"] = f"bytes {from_bytes}-{until_bytes}/{file_size}"
+
+    response = web.StreamResponse(
         status=206 if range_header else 200,
-        body=body,
-        headers={
-            "Content-Type": f"{mime_type}",
-            "Content-Range": f"bytes {from_bytes}-{until_bytes}/{file_size}",
-            "Content-Length": str(req_length),
-            "Content-Disposition": f'{disposition}; filename="{file_name}"',
-            "Accept-Ranges": "bytes",
-        },
+        headers=headers,
     )
+    await response.prepare(request)
+    try:
+        async for chunk in body:
+            await response.write(chunk)
+    finally:
+        await response.write_eof()
+    return response
 

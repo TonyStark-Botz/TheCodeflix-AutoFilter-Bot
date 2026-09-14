@@ -16,6 +16,7 @@ from datetime import datetime, date, time, timedelta
 import string
 from typing import List
 from database.users_chats_db import db
+from database.verify_db import vr_db
 from bs4 import BeautifulSoup
 import requests
 import aiohttp
@@ -728,7 +729,12 @@ async def update_verify_status(userid, date_temp, time_temp):
     status["date"] = date_temp
     status["time"] = time_temp
     temp.VERIFY[userid] = status
-    await db.update_verification(userid, date_temp, time_temp)    
+    await db.update_verification(userid, date_temp, time_temp)
+    # --- Verification Analytics (CW system, async motor) ---
+    try:
+        await vr_db.save_verification(userid)
+    except Exception:
+        pass    
     
 
 

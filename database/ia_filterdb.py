@@ -68,42 +68,6 @@ language_map = {
     " Jap ": "Japanese",
 }
 
-# Pre-compiled blacklist regex — split across lines to avoid tool truncation
-_BLACKLIST_RE = re.compile(
-    r"(mkv|movies|movie|x264| piro |x265|Kbps|mwkOTT|AAC|SMM|x264-PAHE"
-    r"|mp4|MP4|MP3|Mp4|telegram|Bollywood|Hollywood|Tollywood|Download"
-    r"|subtitles|film|dubbed|latest|ClipmateMovies|mkvCinemas|PrimeFix"
-    r"|www_SkymoviesHD_email|www|Latest_Movies_Reborn|Netflix_Villa_Original"
-    r"|FilmOne_Movies|Miteshpatelnewmovies|MoviesClubXyz|Skymovies"
-    r"|File_Movies_Uploaded|Tg-@New_Movies_OnTG|Tg_@New_Movies_OnTG"
-    r"|Moonknight_media|Bob_files|Desire|CineVood|Bisal|Miteshpatelnew"
-    r"|Mallu_Movies|TheMoviesBoss|cineasteseries|Links|Mallu"
-    r"|@MR_Linkz|Linkz|@Sons_of_TamilRockers|@VideoMemesTamil|@TM_LMO"
-    r"|@Vip_LinkzZ|@Tamil_LinkzZ|@mwkOTT|@C_V|@Mallu_Movies"
-    r"|TamilRockers|Tamilblasters|@lubokvideo|@NithinMovies|Linkzz|Bolly4u"
-    r"|Jesseverse|TeamSeries|@Mj_Linkz|@SY_MS|@ulluweb_Series|@Einthusan"
-    r"|@RayFilms4U|@IMDbFilms4U|@HindiOldMovies|@HollywoodBay|@hdhindicinemas"
-    r"|@Hollywood_WebHub|MoviesVerse|A2MOVIES|@CE_LinkS|@mallukingz"
-    r"|@MEDIA_KING|@MoviePlayTk|@MOVIEHUNT|@E4E_ROCKERS|@MOVIEZMOB"
-    r"|@pluscinemas|@QualityCinemaZ|@universalpicturez|@uteam|TamilMV"
-    r"|@mfmixhindi|@mwkseries|@FBM|@vivimaxx|@IM|@Cinemagramz"
-    r"|Toonsouthindia|POPCORN_FILMS|@UCParadiso|@ensembly|@nkmhdpro1"
-    r"|worldfree4|@bb_movie|@Links2U|@QualiStuff|@Hindi_UltraHD_Movies"
-    r"|@Moviesmasaaly|@KannadaWarriors|@Mxoriginals|@udanpadam|@Star_rockers"
-    r"|@Ml_Movies|@SimplyCinema|www_TamilBlasters_uk|@khatrimaza|@MCArchives"
-    r"|@Movieslkwww|@HindiHDCinemaa|Filmy4wap_xyz|@InfotainmentMedia2"
-    r"|FILMCOMPANY|@CinematicsUnited|@ALBCINEMASALL|@Kande76|@MKMovieking"
-    r"|@SoumenBot|@FrediesChannel|@MMXE|@Massmoviess|@popcorn_cinemas"
-    r"|@tamilrockers_in|@TROFFICIAL|@Bollywoodcinemas|@desimovies_TelegramHindi"
-    r"|@CC_Series|KatmovieHD|@geniehd|@HindiRockers|@CelluloidCineClub"
-    r"|@Mlwapcinemas|@kickass_torrents|@fullyfilmie|@paravamedia|@southindianm"
-    r"|@H265_Movies|@t_m_Golmaal|Downloadhub\.us|mobile_mm|TbestMovies4"
-    r"|movieworldkdY|Akatsuki_Media|Tvserieshome|@WMR_Terminator"
-    r"|@HindiHDMovies_Netflix|@desimovies|@RickyChannel)",
-    flags=re.IGNORECASE
-)
-
-
 @instance.register
 class Media(Document):
     file_id = fields.StrField(attribute='_id')
@@ -120,76 +84,55 @@ class Media(Document):
 
 
 async def save_file(media):
-    """Save file in database"""
+    """Save file in database — safe normalization only (no blacklist, no emoji pollution)."""
 
-    # Extracting necessary fields
     file_id, file_ref = unpack_new_file_id(media.file_id)
 
-    # Initial cleaning of file_name
-    file_name = str(media.file_name)
+    file_name = str(media.file_name) if getattr(media, "file_name", None) else ""
+    caption_text = str(media.caption) if getattr(media, "caption", None) else ""
 
-    # Remove blacklist words and patterns
-    file_name = _BLACKLIST_RE.sub('', file_name)
-    file_name = re.sub(r'@[\w]+|[._\(\)\[\]]', ' ', file_name)
-    file_name = re.sub(r"'", '', file_name)
-    file_name = re.sub(r'\s+', ' ', file_name).strip()
-
-    # Initialize sets to store found languages and qualities
+    # Detect languages & qualities from filename + caption
     found_languages = set()
     found_qualities = set()
-
-    # Clean up file_name from unnecessary characters and spaces initially
-    file_name = re.sub(r'[@._\(\)\[\]+\s]+', ' ', file_name)
-    file_name += ' '
-
-    # Process the caption if it exists
-    if media.caption:
-        caption_text = media.caption
-        caption_text = re.sub(r'@[\w]+|[._\(\)\[\]]', ' ', caption_text, flags=re.IGNORECASE)
-        caption_text = re.sub(r't\.me/\w+', ' ', caption_text, flags=re.IGNORECASE)
-        caption_text = re.sub(r'(http[s]?://\S+|www\.\S+)', ' ', caption_text, flags=re.IGNORECASE)
-        caption_text = re.sub(r'\s+', ' ', caption_text).strip()
-        caption_text += ' '
-    else:
-        caption_text = None
-
-    # Search and extract languages from caption text and file name
+    haystack = f" {file_name} {caption_text} "
     for lang in languages:
-        if (caption_text and re.search(re.escape(lang), caption_text, flags=re.IGNORECASE)) or \
-           re.search(re.escape(lang), file_name, flags=re.IGNORECASE):
-            full_name = language_map.get(lang, lang)
-            found_languages.add(full_name)
-            file_name = re.sub(re.escape(lang), ' ', file_name, flags=re.IGNORECASE).strip()
-            file_name = re.sub(re.escape(full_name), ' ', file_name, flags=re.IGNORECASE).strip()
-
-    # Search and extract qualities from caption text and file name
+        if re.search(re.escape(lang), haystack, flags=re.IGNORECASE):
+            found_languages.add(language_map.get(lang, lang))
     for quality in qualities:
-        if (caption_text and re.search(re.escape(quality), caption_text, flags=re.IGNORECASE)) or \
-           re.search(re.escape(quality), file_name, flags=re.IGNORECASE):
+        if re.search(re.escape(quality), haystack, flags=re.IGNORECASE):
             found_qualities.add(quality)
-            file_name = re.sub(re.escape(quality), ' ', file_name, flags=re.IGNORECASE).strip()
 
-    # Clean up any extra spaces in the file name
-    file_name = re.sub(r'\s+', ' ', file_name).strip()
+    # Remove detected languages/qualities tokens from searchable name
+    clean_name = file_name
+    for token in list(found_languages) + list(found_qualities):
+        clean_name = re.sub(re.escape(token), ' ', clean_name, flags=re.IGNORECASE)
 
-    # Append found languages to the file_name
+    # Strip telegram usernames and links
+    clean_name = re.sub(r'@[\w]+', ' ', clean_name)
+    clean_name = re.sub(r'(https?://\S+|www\.\S+|t\.me/\S+)', ' ', clean_name, flags=re.IGNORECASE)
+
+    # SAFE normalization only: (_-+.[]()) -> space (blacklist system removed)
+    clean_name = re.sub(r"[\(\)\[\]\-_\+\.]", ' ', clean_name)
+    clean_name = re.sub(r"['\"\`]", '', clean_name)
+    clean_name = re.sub(r'\s+', ' ', clean_name).strip()
+
+    # Build clean metadata caption (filename pure रहेगा, pollute नहीं होगा)
+    meta_parts = []
     if found_languages:
-        file_name += " ll "
-        file_name += "🔊 :- " + ', '.join(found_languages)
-
-    # Append found qualities to the file_name
+        meta_parts.append("Audio: " + ', '.join(sorted(found_languages)))
     if found_qualities:
-        file_name += " ll "
-        file_name += "📽️ :- " + ', '.join(found_qualities)
+        meta_parts.append("Quality: " + ', '.join(sorted(found_qualities)))
+    meta_caption = " | ".join(meta_parts) if meta_parts else None
 
     try:
         file = Media(
             file_id=file_id,
             file_ref=file_ref,
-            file_name=file_name if media.file_name else caption_text,
+            file_name=clean_name if clean_name else (caption_text or "unknown"),
             file_size=media.file_size,
             file_type=media.file_type,
             mime_type=media.mime_type,
+            caption=meta_caption,
         )
     except ValidationError:
         logger.exception('Error occurred while saving file in database')

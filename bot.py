@@ -12,7 +12,7 @@ from utils import temp
 from typing import Union, Optional, AsyncGenerator
 from pyrogram import types
 from Script import script 
-from plugins import web_server
+from plugins import web_server, check_expired_premium
 from lazybot import LazyPrincessBot
 from util.keepalive import ping_server
 from lazybot.clients import initialize_clients
@@ -106,6 +106,7 @@ if __name__ == '__main__':
         loop = asyncio.get_event_loop()
         loop.create_task(auto_restart())
         loop.create_task(cache_cleanup())
+        loop.create_task(check_expired_premium(LazyPrincessBot))
         loop.run_until_complete(Lazy_start())
     except KeyboardInterrupt:
         logging.info('Service Stopped Bye 👋')

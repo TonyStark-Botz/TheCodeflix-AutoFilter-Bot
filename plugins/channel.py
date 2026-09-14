@@ -159,8 +159,12 @@ file_queue = Queue()
 async def file_worker():
     while True:
         media = await file_queue.get()  # Get file from queue
-        await save_file(media)  # Process file (async function)
-        file_queue.task_done()  # Mark the task as done
+        try:
+            await save_file(media)  # Process file (async function)
+        except Exception as e:
+            logger.exception(f"Error while saving queued file: {e}")  # एक crash पर queue stall नहीं होगी
+        finally:
+            file_queue.task_done()  # Mark the task as done (हमेशा)
 
 # Add workers to process files in parallel (e.g. 3 workers)
 for _ in range(3):
@@ -250,10 +254,20 @@ async def media_handler(bot, message):
                 rating = poster_data.get('rating', 'N/A') if poster_data else 'N/A'
                 genres = poster_data.get('genres', 'N/A') if poster_data else 'N/A'
 
+                # Dynamic poster — IMDb poster try/except, fallback to default image
+                poster_url = "https://i.ibb.co/Dfyxkg5W/photo-2025-03-31-03-05-42-7487804546001928212.jpg"
+                if poster_data:
+                    try:
+                        imdb_poster = poster_data.get('poster') or poster_data.get('image') or poster_data.get('cover')
+                        if imdb_poster:
+                            poster_url = imdb_poster
+                    except Exception:
+                        pass
+
                 # Send the log message with the movie poster
                 await bot.send_photo(
                     chat_id=MV_UPDATE_CHANNEL,
-                    photo="https://i.ibb.co/Dfyxkg5W/photo-2025-03-31-03-05-42-7487804546001928212.jpg",
+                    photo=poster_url,
                     caption=(f"#𝗡𝗲𝘄𝗠𝗼𝘃𝗶𝗲_𝗔𝗱𝗱𝗲𝗱\n\n"
                              f"🔖 𝗠𝗼𝘃𝗶𝗲 𝗧𝗶𝘁𝗹𝗲: {filename}\n\n"
                              f"🗂️ 𝗧𝗼𝘁𝗮𝗹 𝗙𝗶𝗹𝗲𝘀: {total_results}\n\n"

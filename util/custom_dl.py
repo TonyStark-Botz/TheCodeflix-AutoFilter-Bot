@@ -215,10 +215,11 @@ class ByteStreamer:
                             location=location, offset=offset, limit=chunk_size
                         ),
                     )
-        except (TimeoutError, AttributeError):
-            pass
+        except (TimeoutError, AttributeError) as exc:
+            logging.error("Media transfer failed at part %s: %s", current_part, exc)
+            raise
         finally:
-            logging.debug("Finished yielding file with {current_part} parts.")
+            logging.debug("Finished yielding file with %s parts.", current_part - 1)
             work_loads[index] -= 1
 
     
