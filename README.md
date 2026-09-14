@@ -6,8 +6,7 @@
   [![TheCodeFlix](https://img.shields.io/badge/Join-TheCodeFlix-FF1493.svg?logo=telegram)](https://t.me/TheCodeFlix)
 
   <p align="center">
-    <b>A high-performance, fully customizable Telegram Movie & File AutoFilter Bot.</b><br>
-    <i>Integrated with Web Streaming, File Hosting, Shorteners, and Advanced MongoDB Caching.</i>
+    <b>Integrated with Web Streaming, File Hosting, Shorteners, and Advanced MongoDB Caching.</b><br>
   </p>
 </div>
 
