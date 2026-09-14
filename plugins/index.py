@@ -103,7 +103,12 @@ async def index_files(bot, query):
     )
 
 
-@Client.on_message(filters.private & filters.text & filters.incoming)
+@Client.on_message(
+    filters.private
+    & filters.text
+    & filters.incoming
+    & ~filters.regex(r"^[/#]")
+)
 async def receive_index_skip(bot, message):
     pending = pending_index_requests.get(message.from_user.id)
     if not pending or not pending.get("awaiting_skip"):
