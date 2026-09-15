@@ -17,7 +17,7 @@ def generate_code(length=10):
     return ''.join(random.choice(letters_and_digits) for _ in range(length))
 
 
-@Client.on_message(filters.command("addgiftcode") & filters.user(ADMINS))
+@Client.on_message(filters.command("add_giftcode") & filters.user(ADMINS))
 async def add_redeem_code(client, message):
     if len(message.command) == 3:
         try:
