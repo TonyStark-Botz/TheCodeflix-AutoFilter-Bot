@@ -208,10 +208,11 @@ async def index_files_to_db(lst_msg_id, chat, msg, bot, skip):
     def status_text(fetched, status):
         return (
             f"Total Messages Fetched: <code>{fetched}</code>\n"
+            f"Total Message Skipped: <code>{skip}</code>\n"
             f"Total Message Saved: <code>{total_files}</code>\n"
             f"Duplicate Files Skipped: <code>{duplicate}</code>\n"
-            f"Deleted Messages Skipped: <code>{deleted}</code>\n"
             f"Unsupported Files skipped: <code>{unsupported}</code>\n"
+            f"Deleted Messages Skipped: <code>{deleted}</code>\n"
             f"Total Errors Occurred: <code>{errors}</code>\n\n"
             f"Current Status: {status}"
         )
