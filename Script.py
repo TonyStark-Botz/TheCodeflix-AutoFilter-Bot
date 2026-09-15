@@ -136,173 +136,81 @@ Cᴏᴍᴍᴀɴᴅs Aɴᴅ Usᴀɢᴇ:
 • /disconnect  - <code>ᴅɪꜱᴄᴏɴɴᴇᴄᴛ ꜰʀᴏᴍ ᴀ ᴄʜᴀᴛ</code>
 • /connections - <code>ʟɪꜱᴛ ᴀʟʟ ʏᴏᴜʀ ᴄᴏɴɴᴇᴄᴛɪᴏɴꜱ</code>"""
     
-    _LEGACY_ADMIN_TXT = """ʜᴇʟᴘ: Aᴅᴍɪɴ Mᴏᴅs [Oɴʟʏ Fᴏʀ Aᴅᴍɪɴ]
-• /logs - ɢᴇᴛ ᴛʜᴇ ʀᴇᴄᴇɴᴛ ᴇʀʀᴏʀꜱ.
-• /stats - sᴛᴜᴛᴜs ᴏғ ғɪʟᴇ ɪɴ ᴅʙ.
-• /restart - ʀᴇsᴛᴀʀᴛ ᴛʜᴇ ʙᴏᴛ.
-• /enable - 𝑟𝑒-𝑒𝑛𝑎𝑏𝑙𝑒 𝑐ℎ𝑎𝑡.
-• /disable  -  ᴅɪꜱᴀʙʟᴇ ᴀ ᴄʜᴀᴛ.
-• /ban  - ʙᴀɴ ᴀ ᴜꜱᴇʀ.
-• /unban  - ᴜɴʙᴀɴ ᴀ ᴜꜱᴇʀ.
-• /users - ɢᴇᴛ ʟɪꜱᴛ ᴏꜰ ᴍʏ ᴜꜱᴇʀꜱ ᴀɴᴅ ɪᴅꜱ.
-• /chats - ɢᴇᴛ ʟɪꜱᴛ ᴏꜰ ᴍʏ ᴄʜᴀᴛꜱ ᴀɴᴅ ɪᴅꜱ.
-• /channel - ɢᴇᴛ ʟɪꜱᴛ ᴏꜰ ᴛᴏᴛᴀʟ ᴄᴏɴɴᴇᴄᴛᴇᴅ ɢʀᴏᴜᴘꜱ.
-• /add_premium - ᴀᴅᴅ ᴜꜱᴇʀ ᴛᴏ ᴘʀᴇᴍɪᴜᴍ.
-• /remove_premium - ʀᴇᴍᴏᴠᴇ ᴜꜱᴇʀ ғʀᴏᴍ ᴘʀᴇᴍɪᴜᴍ.
-• /get_premium - ɢᴇᴛ ɪɴғᴏ ᴏꜰ ᴘʀᴇᴍɪᴜᴍ ᴜꜱᴇʀ.
-• /premium_users - ɢᴇᴛ ʟɪꜱᴛ ᴏꜰ ᴘʀᴇᴍɪᴜᴍ ᴜꜱᴇʀꜱ.
-• /send - ꜱᴇɴᴅ ᴍᴇꜱꜱᴀɢᴇ ᴛᴏ ᴀ ᴘᴀʀᴛɪᴄᴜʟᴀʀ ᴜꜱᴇʀ.
-• /broadcast - ʙʀᴏᴀᴅᴄᴀꜱᴛ ᴀ ᴍᴇꜱꜱᴀɢᴇ ᴛᴏ ᴀʟʟ ᴜꜱᴇʀꜱ.
-• /grp_broadcast - ʙʀᴏᴀᴅᴄᴀsᴛ ᴀ ᴍᴇssᴀɢᴇ ᴛᴏ ᴀʟʟ ᴄᴏɴɴᴇᴄᴛᴇᴅ ɢʀᴏᴜᴘs.
-"""
-
-    _LEGACY_EXTRA_TXT = """ʜᴇʟᴘ: Aᴅᴍɪɴ Mᴏᴅs [Oɴʟʏ Fᴏʀ Aᴅᴍɪɴ]
-
-• /gfilter - 𝑎𝑑𝑑 𝑔𝑙𝑜𝑏𝑎𝑙 𝑓𝑖𝑙𝑡𝑒𝑟𝑠.
-• /gfilters - 𝑣𝑖𝑒𝑤 𝑙𝑖𝑠𝑡 𝑜𝑓 𝑎𝑙𝑙 𝑔𝑙𝑜𝑏𝑎𝑙 𝑓𝑖𝑙𝑡𝑒𝑟𝑠.
-• /del - 𝑑𝑒𝑙𝑒𝑡𝑒 𝑎 𝑓𝑖𝑙𝑡𝑒𝑟
-• /delg - 𝑑𝑒𝑙𝑒𝑡𝑒 𝑎 𝑠𝑝𝑒𝑐𝑖𝑓𝑖𝑐 𝑔𝑙𝑜𝑏𝑎𝑙 𝑓𝑖𝑙𝑡𝑒𝑟.
-• /delall - 𝑑𝑒𝑙𝑒𝑡𝑒 𝑎𝑙𝑙 𝑓𝑖𝑙𝑡𝑒𝑟𝑠
-• /delallg - 𝑑𝑒𝑙𝑒𝑡𝑒 𝑎𝑙𝑙 𝑔𝑙𝑜𝑏𝑎𝑙 𝑓𝑖𝑙𝑡𝑒𝑟𝑠 𝑓𝑟𝑜𝑚 𝑡ℎ𝑒 𝑏𝑜𝑡'𝑠 𝑑𝑎𝑡𝑎𝑏𝑎𝑠𝑒.
-• /delete - 𝑑𝑒𝑙𝑒𝑡𝑒 𝑎 𝑠𝑝𝑒𝑐𝑖𝑓𝑖𝑐 𝑓𝑖𝑙𝑒 𝑓𝑟𝑜𝑚 𝑖𝑛𝑑𝑒𝑥.
-• /deleteall - 𝑑𝑒𝑙𝑒𝑡𝑒 𝑎𝑙𝑙 𝑖𝑛𝑑𝑒𝑥𝑒𝑑 𝑓𝑖𝑙𝑒𝑠.
-• /deletefiles - 𝑑𝑒𝑙𝑒𝑡𝑒 𝑃𝑟𝑒𝐷𝑉𝐷 𝑎𝑛𝑑 𝐶𝑎𝑚𝑅𝑖𝑝 𝐹𝑖𝑙𝑒𝑠 𝑓𝑟𝑜𝑚 𝑡ℎ𝑒 𝑏𝑜𝑡'𝑠 𝑑𝑎𝑡𝑎𝑏𝑎𝑠𝑒.
-"""
-
-    ADMIN_TXT = """🛠️ 𝗔𝗗𝗠𝗜𝗡 𝗖𝗢𝗡𝗧𝗥𝗢𝗟 𝗣𝗔𝗡𝗘𝗟 · 𝟭/𝟮
-
-📊 𝗦𝗧𝗔𝗧𝗨𝗦 & 𝗔𝗖𝗖𝗘𝗦𝗦
-• /stats - ʙᴏᴛ ᴀɴᴅ ᴅᴀᴛᴀʙᴀsᴇ sᴛᴀᴛᴜs.
-• /users - ʟɪsᴛ ᴀʟʟ ʙᴏᴛ ᴜsᴇʀs.
-• /chats - ʟɪsᴛ ᴀʟʟ ᴄᴏɴɴᴇᴄᴛᴇᴅ ᴄʜᴀᴛs.
-• /channel - ʟɪsᴛ ɪɴᴅᴇxᴇᴅ ᴄʜᴀɴɴᴇʟs.
-
-💎 𝗣𝗥𝗘𝗠𝗜𝗨𝗠 𝗠𝗔𝗡𝗔𝗚𝗘𝗠𝗘𝗡𝗧
-• /premium_users - ᴠɪᴇᴡ ᴘʀᴇᴍɪᴜᴍ ᴜsᴇʀs.
-• /get_premium - ᴄʜᴇᴄᴋ ᴀ ᴜsᴇʀ's ᴘʀᴇᴍɪᴜᴍ.
-• /add_premium - ɢʀᴀɴᴛ ᴘʀᴇᴍɪᴜᴍ ᴀᴄᴄᴇss.
-• /addgiftcode - ɢᴇɴᴇʀᴀᴛᴇ ᴘʀᴇᴍɪᴜᴍ ɢɪғᴛ ᴄᴏᴅᴇs.
-
-⚙️ 𝗦𝗬𝗦𝗧𝗘𝗠 & 𝗚𝗥𝗢𝗨𝗣 𝗖𝗢𝗡𝗙𝗜𝗚
-• /enable · /disable - ᴇɴᴀʙʟᴇ ᴏʀ ᴅɪsᴀʙʟᴇ ᴀ ᴄʜᴀᴛ.
-• /settings - ᴏᴘᴇɴ ɢʀᴏᴜᴘ sᴇᴛᴛɪɴɢs.
-• /set_template - ᴜᴘᴅᴀᴛᴇ ғɪʟᴇ ᴄᴀᴘᴛɪᴏɴ ᴛᴇᴍᴘʟᴀᴛᴇ.
-• /pm_search - ᴛᴜʀɴ ᴘᴍ sᴇᴀʀᴄʜ ᴏɴ ᴏʀ ᴏғғ.
-• /verification - ᴠɪᴇᴡ ᴠᴇʀɪғɪᴇᴅ ᴜsᴇʀ ᴀɴᴀʟʏᴛɪᴄs.
-
-🔗 𝗚𝗥𝗢𝗨𝗣 𝗔𝗗𝗠𝗜𝗡 𝗧𝗢𝗢𝗟𝗦
-• /connect · /disconnect · /connections - ᴍᴀɴᴀɢᴇ ᴘᴍ ᴄᴏɴɴᴇᴄᴛɪᴏɴs.
-• /shortlink · /shortlink_info - ᴍᴀɴᴀɢᴇ sʜᴏʀᴛʟɪɴᴋ sᴇᴛᴛɪɴɢs.
-• /setshortlinkon · /setshortlinkoff - ᴛᴏɢɢʟᴇ sʜᴏʀᴛʟɪɴᴋs.
-• /set_tutorial · /remove_tutorial - ᴍᴀɴᴀɢᴇ ᴛᴜᴛᴏʀɪᴀʟ ʟɪɴᴋs.
-
-🔍 𝗙𝗜𝗟𝗧𝗘𝗥𝗦
-• /filter · /filters - ᴍᴀɴᴀɢᴇ ɢʀᴏᴜᴘ ғɪʟᴛᴇs.
-• /gfilter · /gfilters - ᴍᴀɴᴀɢᴇ ɢʟᴏʙᴀʟ ғɪʟᴛᴇs.
-"""
-
-    EXTRA_TXT = """🛠️ 𝗔𝗗𝗠𝗜𝗡 𝗖𝗢𝗡𝗧𝗥𝗢𝗟 𝗣𝗔𝗡𝗘𝗟 · 𝟮/𝟮
-
-🗑️ 𝗗𝗘𝗟𝗘𝗧𝗜𝗢𝗡 & 𝗗𝗔𝗡𝗚𝗘𝗥𝗢𝗨𝗦 𝗔𝗖𝗧𝗜𝗢𝗡𝗦
-• /delete - ᴅᴇʟᴇᴛᴇ ᴀ sɪɴɢʟᴇ ɪɴᴅᴇxᴇᴅ ғɪʟᴇ.
-• /deleteall - ᴅᴇʟᴇᴛᴇ ᴀʟʟ ɪɴᴅᴇxᴇᴅ ғɪʟᴇs.
-• /deletefiles - ʀᴇᴍᴏᴠᴇ ᴜɴᴡᴀɴᴛᴇᴅ ғɪʟᴇs ғʀᴏᴍ ᴛʜᴇ ᴅᴀᴛᴀʙᴀsᴇ.
-• /del · /delall - ᴅᴇʟᴇᴛᴇ ɢʀᴏᴜᴘ ғɪʟᴛᴇs.
-• /delg · /delallg - ᴅᴇʟᴇᴛᴇ ɢʟᴏʙᴀʟ ғɪʟᴛᴇs.
-• /remove_premium - ʀᴇᴠᴏᴋᴇ ᴀ ᴜsᴇʀ's ᴘʀᴇᴍɪᴜᴍ.
-
-📢 𝗖𝗢𝗠𝗠𝗨𝗡𝗜𝗖𝗔𝗧𝗜𝗢𝗡
-• /send - sᴇɴᴅ ᴀ ᴅɪʀᴇᴄᴛ ᴍᴇssᴀɢᴇ ᴛᴏ ᴀ ᴜsᴇʀ.
-• /broadcast - sᴇɴᴅ ᴀ ᴍᴇssᴀɢᴇ ᴛᴏ ᴀʟʟ ᴜsᴇʀs.
-• /grp_broadcast - sᴇɴᴅ ᴀ ᴍᴇssᴀɢᴇ ᴛᴏ ᴀʟʟ ᴄᴏɴɴᴇᴄᴛᴇᴅ ɢʀᴏᴜᴘs.
-• /delreq - ᴄʟᴇᴀʀ ᴀʟʟ ᴘᴇɴᴅɪɴɢ ᴊᴏɪɴ ʀᴇǫᴜᴇsᴛs.
-
-🛡️ 𝗠𝗢𝗗𝗘𝗥𝗔𝗧𝗜𝗢𝗡 & 𝗦𝗬𝗦𝗧𝗘𝗠
-• /ban · /unban - ʙᴀɴ ᴏʀ ᴜɴʙᴀɴ ᴀ ᴜsᴇʀ.
-• /logs - ᴅᴏᴡɴʟᴏᴀᴅ ʙᴏᴛ ʟᴏɢs.
-• /clear_logs - ᴄʟᴇᴀʀ ᴛʜᴇ ɪɴᴅᴇx ʟᴏɢ.
-• /topsearch - ᴠɪᴇᴡ ᴛᴏᴘ sᴇᴀʀᴄʜ ᴀɴᴀʟʏᴛɪᴄs.
-• /clearsearch - ʀᴇsᴇᴛ sᴇᴀʀᴄʜ ᴀɴᴀʟʏᴛɪᴄs.
-• /restart - ʀᴇsᴛᴀʀᴛ ᴛʜᴇ ʙᴏᴛ sᴇʀᴠᴇʀ.
-"""
-
     ADMIN_TXT = """🛠️ 𝗔𝗗𝗠𝗜𝗡 𝗖𝗢𝗡𝗧𝗥𝗢𝗟 𝗣𝗔𝗡𝗘𝗟 · 𝟭/𝟯
 
 📊 𝗦𝗧𝗔𝗧𝗨𝗦 & 𝗨𝗦𝗘𝗥𝗦
-• /stats - ʙᴏᴛ, ᴜsᴇʀ, ᴄʜᴀᴛ ᴀɴᴅ sᴛᴏʀᴀɢᴇ sᴛᴀᴛᴜs.
-• /users - ᴇxᴘᴏʀᴛ ᴛʜᴇ ʟɪsᴛ ᴏғ ʙᴏᴛ ᴜsᴇʀs.
-• /chats - ᴇxᴘᴏʀᴛ ᴛʜᴇ ʟɪsᴛ ᴏғ ᴄᴏɴɴᴇᴄᴛᴇᴅ ᴄʜᴀᴛs.
-• /channel - sʜᴏᴡ ᴄᴏɴғɪɢᴜʀᴇᴅ ɪɴᴅᴇxɪɴɢ ᴄʜᴀɴɴᴇʟs.
+• /stats - ᴜsᴇʀ, ᴄʜᴀᴛ ᴀɴᴅ sᴛᴏʀᴀɢᴇ sᴛᴀᴛᴜs.
+• /users - ᴛʜᴇ ʟɪsᴛ ᴏғ ʙᴏᴛ ᴜsᴇʀs.
+• /chats - ᴛʜᴇ ʟɪsᴛ ᴏғ ᴄᴏɴɴᴇᴄᴛᴇᴅ ᴄʜᴀᴛs.
+• /channel - sʜᴏᴡ ɪɴᴅᴇxɪɴɢ ᴄʜᴀɴɴᴇʟs.
 
 💎 𝗣𝗥𝗘𝗠𝗜𝗨𝗠
-• /premium_users - sʜᴏᴡ ᴀʟʟ ᴘʀᴇᴍɪᴜᴍ ᴜsᴇʀs.
+• /premium_users - sʜᴏᴡ ᴘʀᴇᴍɪᴜᴍ ᴜsᴇʀs.
 • /get_premium <code>&lt;user_id&gt;</code> - sʜᴏᴡ ᴏɴᴇ ᴜsᴇʀ's ᴘʟᴀɴ.
 • /add_premium <code>&lt;user_id&gt; &lt;time&gt;</code> - ɢʀᴀɴᴛ ᴘʀᴇᴍɪᴜᴍ.
-• /addgiftcode <code>&lt;time&gt; &lt;count&gt;</code> - ɢᴇɴᴇʀᴀᴛᴇ ɢɪғᴛ ᴄᴏᴅᴇs.
+• /remove_premium <code>&lt;user_id&gt;</code> - ʀᴇᴠᴏᴋᴇ ᴜsᴇʀ ᴘʀᴇᴍɪᴜᴍ.
+• /add_giftcode <code>&lt;time&gt; &lt;count&gt;</code> - ɢᴇɴᴇʀᴀᴛᴇ ɢɪғᴛ ᴄᴏᴅᴇs.
 
 ⚙️ 𝗦𝗬𝗦𝗧𝗘𝗠
 • /pm_search <code>on|off</code> - ᴛᴏɢɢʟᴇ ᴘᴍ sᴇᴀʀᴄʜ.
 • /verification - sʜᴏᴡ ᴠᴇʀɪғɪᴇᴅ ᴜsᴇʀ ᴀɴᴀʟʏᴛɪᴄs.
+• /delreq - ᴄʟᴇᴀʀ ᴀʟʟ ᴘᴇɴᴅɪɴɢ ᴊᴏɪɴ ʀᴇǫᴜᴇsᴛs ғʀᴏᴍ ᴅʙ.
+• /invite <code>&lt;chat_id&gt;</code> - ɢᴇɴᴇʀᴀᴛᴇ ᴀ ɢʀᴏᴜᴘ ɪɴᴠɪᴛᴇ ʟɪɴᴋ.
 """
 
     EXTRA_TXT = """🛠️ 𝗔𝗗𝗠𝗜𝗡 𝗖𝗢𝗡𝗧𝗥𝗢𝗟 𝗣𝗔𝗡𝗘𝗟 · 𝟮/𝟯
-
-🗂️ 𝗙𝗜𝗟𝗘 𝗠𝗔𝗡𝗔𝗚𝗘𝗠𝗘𝗡𝗧
-• /delete - ʀᴇᴘʟʏ ᴛᴏ ᴀ ғɪʟᴇ ᴛᴏ ʀᴇᴍᴏᴠᴇ ɪᴛ ғʀᴏᴍ ᴅᴀᴛᴀʙᴀsᴇ.
-• /deleteall - ᴄᴏɴғɪʀᴍ ᴅᴇʟᴇᴛɪᴏɴ ᴏғ ᴀʟʟ ɪɴᴅᴇxᴇᴅ ғɪʟᴇs.
-• /deletefiles - ᴅᴇʟᴇᴛᴇ ᴘʀᴇᴅᴠᴅ ᴀɴᴅ ᴄᴀᴍʀɪᴘ ғɪʟᴇs.
-• /clear_logs - ᴄʟᴇᴀʀ ᴛʜᴇ ᴍᴏᴠɪᴇ ᴜᴘᴅᴀᴛᴇ ʟᴏɢ.
-
-🔍 𝗙𝗜𝗟𝗧𝗘𝗥𝗦
-• /gfilter <code>&lt;keyword&gt; &lt;reply&gt;</code> - ᴀᴅᴅ ᴀ ɢʟᴏʙᴀʟ ғɪʟᴛᴇʀ.
-• /gfilters - ʟɪsᴛ ᴀʟʟ ɢʟᴏʙᴀʟ ғɪʟᴛᴇʀs.
-• /delg <code>&lt;keyword&gt;</code> - ᴅᴇʟᴇᴛᴇ ᴏɴᴇ ɢʟᴏʙᴀʟ ғɪʟᴛᴇʀ.
-• /delallg - ᴅᴇʟᴇᴛᴇ ᴀʟʟ ɢʟᴏʙᴀʟ ғɪʟᴛᴇʀs.
-• /del <code>&lt;keyword&gt;</code> - ᴅᴇʟᴇᴛᴇ ᴏɴᴇ ɢʀᴏᴜᴘ ғɪʟᴛᴇʀ.
-• /delall - ᴅᴇʟᴇᴛᴇ ᴀʟʟ ғɪʟᴛᴇʀs ɪɴ ᴀ ɢʀᴏᴜᴘ.
-
-💎 𝗣𝗥𝗘𝗠𝗜𝗨𝗠 𝗔𝗖𝗖𝗘𝗦𝗦
-• /remove_premium <code>&lt;user_id&gt;</code> - ʀᴇᴠᴏᴋᴇ ᴜsᴇʀ ᴘʀᴇᴍɪᴜᴍ.
-"""
-
-    THIRD_TXT = """🛠️ 𝗔𝗗𝗠𝗜𝗡 𝗖𝗢𝗡𝗧𝗥𝗢𝗟 𝗣𝗔𝗡𝗘𝗟 · 𝟯/𝟯
 
 📢 𝗖𝗢𝗠𝗠𝗨𝗡𝗜𝗖𝗔𝗧𝗜𝗢𝗡
 • /send <code>&lt;user_id&gt;</code> - sᴇɴᴅ ᴀ ʀᴇᴘʟɪᴇᴅ ᴍᴇssᴀɢᴇ ᴛᴏ ᴏɴᴇ ᴜsᴇʀ.
 • /broadcast - sᴇɴᴅ ᴀ ʀᴇᴘʟɪᴇᴅ ᴍᴇssᴀɢᴇ ᴛᴏ ᴀʟʟ ᴜsᴇʀs.
 • /grp_broadcast - sᴇɴᴅ ᴀ ʀᴇᴘʟɪᴇᴅ ᴍᴇssᴀɢᴇ ᴛᴏ ᴀʟʟ ɢʀᴏᴜᴘs.
-• /delreq - ᴄʟᴇᴀʀ ᴀʟʟ ᴘᴇɴᴅɪɴɢ ᴊᴏɪɴ ʀᴇǫᴜᴇsᴛs.
 
-🛡️ 𝗠𝗢𝗗𝗘𝗥𝗔𝗧𝗜𝗢𝗡
+👮 𝗠𝗢𝗗𝗘𝗥𝗔𝗧𝗜𝗢𝗡
 • /ban <code>&lt;user_id&gt;</code> - ʙᴀɴ ᴀ ᴜsᴇʀ.
 • /unban <code>&lt;user_id&gt;</code> - ᴜɴʙᴀɴ ᴀ ᴜsᴇʀ.
 • /enable <code>&lt;chat_id&gt;</code> - ʀᴇ-ᴇɴᴀʙʟᴇ ᴀ ᴅɪsᴀʙʟᴇᴅ ɢʀᴏᴜᴘ.
 • /disable <code>&lt;chat_id&gt; [reason]</code> - ᴅɪsᴀʙʟᴇ ᴀ ɢʀᴏᴜᴘ.
-• /invite <code>&lt;chat_id&gt;</code> - ɢᴇɴᴇʀᴀᴛᴇ ᴀ ɢʀᴏᴜᴘ ɪɴᴠɪᴛᴇ ʟɪɴᴋ.
 
 🛠️ 𝗢𝗪𝗡𝗘𝗥 & 𝗦𝗘𝗥𝗩𝗘𝗥
 • /cmd - ᴏᴘᴇɴ ᴛʜɪs ᴛʜʀᴇᴇ-ᴘᴀɢᴇ ᴀᴅᴍɪɴ ᴘᴀɴᴇʟ.
-• /topsearch - sʜᴏᴡ ᴛᴏᴘ 𝟯𝟬 sᴇᴀʀᴄʜ ᴀɴᴀʟʏᴛɪᴄs.
+• /topsearch - sʜᴏᴡ ᴛᴏᴘ 𝟯𝟬 sᴇᴀʀᴄʜ ᴅᴀᴛᴀ.
 • /clearsearch - ʀᴇsᴇᴛ sᴇᴀʀᴄʜ ᴀɴᴀʟʏᴛɪᴄs.
 • /logs - sᴇɴᴅ ᴛʜᴇ ʙᴏᴛ ʟᴏɢ ғɪʟᴇ.
 • /restart - ʀᴇsᴛᴀʀᴛ ᴛʜᴇ ʙᴏᴛ sᴇʀᴠᴇʀ.
 
-🔗 𝗚𝗥𝗢𝗨𝗣 𝗔𝗗𝗠𝗜𝗡 𝗧𝗢𝗢𝗟𝗦
-• /settings - ᴏᴘᴇɴ ɢʀᴏᴜᴘ ʙᴏᴛ sᴇᴛᴛɪɴɢs.
-• /set_template <code>&lt;text&gt;</code> - sᴇᴛ ᴛʜᴇ ғɪʟᴇ ᴄᴀᴘᴛɪᴏɴ.
-• /connect <code>&lt;group_id&gt;</code> - ᴄᴏɴɴᴇᴄᴛ ᴀ ɢʀᴏᴜᴘ ᴛᴏ ᴘᴍ.
-• /disconnect - ᴅɪsᴄᴏɴɴᴇᴄᴛ ᴛʜᴇ ᴄᴜʀʀᴇɴᴛ ɢʀᴏᴜᴘ.
-• /connections - ʟɪsᴛ ʏᴏᴜʀ ᴄᴏɴɴᴇᴄᴛᴇᴅ ɢʀᴏᴜᴘs.
+🗂️ 𝗙𝗜𝗟𝗘 𝗠𝗔𝗡𝗔𝗚𝗘𝗠𝗘𝗡𝗧
+• /delete - ʀᴇᴍᴏᴠᴇ ᴀ ғɪʟᴇ ғʀᴏᴍ ᴅʙ.
+• /deleteall - ᴅᴇʟᴇᴛɪᴏɴ ᴀʟʟ ɪɴᴅᴇxᴇᴅ ғɪʟᴇs.
+• /deletefiles - ᴅᴇʟ ᴘʀᴇᴅᴠᴅ ᴀɴᴅ ᴄᴀᴍʀɪᴘ ғɪʟᴇs.
+• /clear_logs - ᴄʟᴇᴀʀ ᴛʜᴇ ᴍᴏᴠɪᴇ ᴜᴘᴅᴀᴛᴇ ʟᴏɢ.
+"""
 
-🔗 𝗦𝗛𝗢𝗥𝗧𝗟𝗜𝗡𝗞 & 𝗠𝗔𝗡𝗨𝗔𝗟 𝗙𝗜𝗟𝗧𝗘𝗥𝗦
+    THIRD_TXT = """🛠️ 𝗔𝗗𝗠𝗜𝗡 𝗖𝗢𝗡𝗧𝗥𝗢𝗟 𝗣𝗔𝗡𝗘𝗟 · 𝟯/𝟯
+
+🔍 𝗙𝗜𝗟𝗧𝗘𝗥𝗦
+• /gfilters - ʟɪsᴛ ᴀʟʟ ɢʟᴏʙᴀʟ ғɪʟᴛᴇʀs.
+• /gfilter <code>&lt;keyword&gt; &lt;reply&gt;</code> - ᴀᴅᴅ ᴀ ɢʟᴏʙᴀʟ ғɪʟᴛᴇʀ.
+• /delg <code>&lt;keyword&gt;</code> - ᴅᴇʟᴇᴛᴇ ᴏɴᴇ ɢʟᴏʙᴀʟ ғɪʟᴛᴇʀ.
+• /delallg - ᴅᴇʟᴇᴛᴇ ᴀʟʟ ɢʟᴏʙᴀʟ ғɪʟᴛᴇʀs.
+• /delall - ᴅᴇʟᴇᴛᴇ ᴀʟʟ ғɪʟᴛᴇʀs ɪɴ ᴀ ɢʀᴏᴜᴘ.
+
+💂 𝗚𝗥𝗢𝗨𝗣 𝗔𝗗𝗠𝗜𝗡 𝗧𝗢𝗢𝗟𝗦
+• /connect - ᴄᴏɴɴᴇᴄᴛ ɢʀᴏᴜᴘ ᴛᴏ ᴘᴍ.
+• /disconnect - ᴅɪsᴄᴏɴɴᴇᴄᴛ ᴛʜᴇ ɢʀᴏᴜᴘ.
+• /connections - ʟɪsᴛ ʏᴏᴜʀ ᴄᴏɴɴᴇᴄᴛᴇᴅ ɢʀᴏᴜᴘs.
+• /settings - ᴏᴘᴇɴ ɢʀᴏᴜᴘ ʙᴏᴛ sᴇᴛᴛɪɴɢs.
+• /set_template - sᴇᴛ ᴛʜᴇ ғɪʟᴇ ᴄᴀᴘᴛɪᴏɴ.
+
+🏦 𝗦𝗛𝗢𝗥𝗧𝗟𝗜𝗡𝗞 & 𝗠𝗔𝗡𝗨𝗔𝗟 𝗙𝗜𝗟𝗧𝗘𝗥𝗦
 • /shortlink <code>&lt;site&gt; &lt;api&gt;</code> - sᴇᴛ ᴀ ɢʀᴏᴜᴘ sʜᴏʀᴛʟɪɴᴋ.
 • /shortlink_info - sʜᴏᴡ ᴛʜᴇ ɢʀᴏᴜᴘ sʜᴏʀᴛʟɪɴᴋ.
 • /setshortlinkon - ᴇɴᴀʙʟᴇ sʜᴏʀᴛʟɪɴᴋs ɪɴ ᴀ ɢʀᴏᴜᴘ.
 • /setshortlinkoff - ᴅɪsᴀʙʟᴇ sʜᴏʀᴛʟɪɴᴋs ɪɴ ᴀ ɢʀᴏᴜᴘ.
 • /set_tutorial <code>&lt;link&gt;</code> - sᴇᴛ ᴀ sʜᴏʀᴛʟɪɴᴋ ᴛᴜᴛᴏʀɪᴀʟ.
 • /remove_tutorial - ʀᴇᴍᴏᴠᴇ ᴛʜᴇ ɢʀᴏᴜᴘ ᴛᴜᴛᴏʀɪᴀʟ.
-• /filter <code>&lt;keyword&gt; &lt;reply&gt;</code> - ᴀᴅᴅ ᴀ ɢʀᴏᴜᴘ ғɪʟᴛᴇʀ.
 • /filters - ʟɪsᴛ ᴛʜᴇ ɢʀᴏᴜᴘ's ғɪʟᴛᴇʀs.
+• /filter <code>&lt;keyword&gt; &lt;reply&gt;</code> - ᴀᴅᴅ ᴀ ɢʀᴏᴜᴘ ғɪʟᴛᴇʀ.
+• /del <code>&lt;keyword&gt;</code> - ᴅᴇʟᴇᴛᴇ ᴏɴᴇ ɢʀᴏᴜᴘ ғɪʟᴛᴇʀ.
 """
 
     STATUS_TXT = """<b>𝗗𝗕 𝟭 :- 
