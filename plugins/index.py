@@ -203,23 +203,40 @@ async def index_files_to_db(lst_msg_id, chat, msg, bot, skip):
     duplicate = 0
     errors = 0
     deleted = 0
-    no_media = 0
     unsupported = 0
+
+    def status_text(fetched, status):
+        return (
+            f"Total Messages Fetched: <code>{fetched}</code>\n"
+            f"Total Message Saved: <code>{total_files}</code>\n"
+            f"Duplicate Files Skipped: <code>{duplicate}</code>\n"
+            f"Deleted Messages Skipped: <code>{deleted}</code>\n"
+            f"Unsupported Files skipped: <code>{unsupported}</code>\n"
+            f"Total Errors Occurred: <code>{errors}</code>\n\n"
+            f"Current Status: {status}"
+        )
+
     async with lock:
         try:
-            current = skip
+            fetched = 0
             temp.CANCEL = False
+            await msg.edit_text(
+                text=status_text(fetched, "RUNNING ♻️"),
+                reply_markup=InlineKeyboardMarkup([
+                    [InlineKeyboardButton('Cancel', callback_data='index_cancel')]
+                ])
+            )
             async for message in bot.iter_messages(chat, lst_msg_id, skip):
                 if temp.CANCEL:
-                    await msg.edit(f"Successfully Cancelled!!\n\nSaved <code>{total_files}</code> files to database!\nDuplicate Files Skipped: <code>{duplicate}</code>\nDeleted Messages Skipped: <code>{deleted}</code>\nNon-Media messages skipped: <code>{no_media + unsupported}</code> (Unsupported Media - `{unsupported}`)\nErrors Occurred: <code>{errors}</code>")
+                    await msg.edit(status_text(fetched, "STOPPED ❎"))
                     break
-                current += 1
-                if current % 150 == 0:
+                fetched += 1
+                if fetched % 150 == 0:
                     can = [[InlineKeyboardButton('Cancel', callback_data='index_cancel')]]
                     reply = InlineKeyboardMarkup(can)
                     try:
                         await msg.edit_text(
-                            text=f"Total messages fetched: <code>{current}</code>\nTotal messages saved: <code>{total_files}</code>\nDuplicate Files Skipped: <code>{duplicate}</code>\nDeleted Messages Skipped: <code>{deleted}</code>\nNon-Media messages skipped: <code>{no_media + unsupported}</code> (Unsupported Media - `{unsupported}`)\nErrors Occurred: <code>{errors}</code>",
+                            text=status_text(fetched, "RUNNING ♻️"),
                             reply_markup=reply)
                     except FloodWait as e:
                         await asyncio.sleep(e.value)
@@ -227,7 +244,6 @@ async def index_files_to_db(lst_msg_id, chat, msg, bot, skip):
                     deleted += 1
                     continue
                 elif not message.media:
-                    no_media += 1
                     continue
                 elif message.media not in [enums.MessageMediaType.AUDIO, enums.MessageMediaType.VIDEO, enums.MessageMediaType.DOCUMENT]:  # Excluding videos
                     unsupported += 1
@@ -248,7 +264,9 @@ async def index_files_to_db(lst_msg_id, chat, msg, bot, skip):
                     errors += 1
         except Exception as e:
             logger.exception(e)
-            await msg.edit(f'Error: {e}')
+            errors += 1
+            await msg.edit(status_text(fetched, "STOPPED ❎"))
         else:
-            await msg.edit(f'Succesfully saved <code>{total_files}</code> to dataBase!\nDuplicate Files Skipped: <code>{duplicate}</code>\nDeleted Messages Skipped: <code>{deleted}</code>\nNon-Media messages skipped: <code>{no_media + unsupported}</code>(Unsupported Media - `{unsupported}` )\nErrors Occurred: <code>{errors}</code>')
+            if not temp.CANCEL:
+                await msg.edit(status_text(fetched, "COMPLETED ✅"))
             
