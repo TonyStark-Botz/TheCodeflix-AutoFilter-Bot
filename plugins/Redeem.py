@@ -53,7 +53,7 @@ async def add_redeem_code(client, message):
         keyboard = InlineKeyboardMarkup([[InlineKeyboardButton("🔑 Redeem Now 🔥", url=f"https://t.me/{temp.U_NAME}")]])
         await message.reply_text(text, reply_markup=keyboard)
     else:
-        await message.reply_text("<b>♻ Usage:\n\n➩ <code>/addgiftcode 1min 1</code>,\n➩ <code>/addgiftcode 1hour 10</code>,\n➩ <code>/addgiftcode 1day 5</code></b>")
+        await message.reply_text("<b>♻ Usage:\n\n➩ <code>/add_giftcode 1min 1</code>,\n➩ <code>/add_giftcode 1hour 10</code>,\n➩ <code>/add_giftcode 1day 5</code></b>")
 
 
 @Client.on_message(filters.command("redeem"))

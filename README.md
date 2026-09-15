@@ -61,7 +61,7 @@ cmd - A secret list of commands!!!
 *These commands are strictly restricted to the bot admins configured in the `ADMINS` environment variable. Do not add them to BotFather to prevent standard users from seeing them.*
 
 * **Status & Access:** `/stats`, `/users`, `/chats`, `/channel`, `/verification`
-* **Premium Management:** `/premium_users`, `/get_premium`, `/add_premium`, `/remove_premium`, `/addgiftcode`
+* **Premium Management:** `/premium_users`, `/get_premium`, `/add_premium`, `/remove_premium`, `/add_giftcode`
 * **System & Group Config:** `/enable`, `/disable`, `/settings`, `/set_template`, `/pm_search`, `/connect`, `/disconnect`, `/connections`
 * **Shortlink & Tutorials:** `/shortlink`, `/shortlink_info`, `/setshortlinkon`, `/setshortlinkoff`, `/set_tutorial`, `/remove_tutorial`
 * **Filters:** `/filter`, `/filters`, `/gfilter` (alias `/addg`), `/gfilters` (alias `/viewgfilters`)
