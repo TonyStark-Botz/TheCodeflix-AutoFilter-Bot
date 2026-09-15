@@ -198,7 +198,7 @@ Cᴏᴍᴍᴀɴᴅs Aɴᴅ Usᴀɢᴇ:
 
 🔍 𝗙𝗜𝗟𝗧𝗘𝗥𝗦
 • /filter · /filters - ᴍᴀɴᴀɢᴇ ɢʀᴏᴜᴘ ғɪʟᴛᴇs.
-• /gfilter · /addg · /gfilters · /viewgfilters - ᴍᴀɴᴀɢᴇ ɢʟᴏʙᴀʟ ғɪʟᴛᴇs.
+• /gfilter · /gfilters - ᴍᴀɴᴀɢᴇ ɢʟᴏʙᴀʟ ғɪʟᴛᴇs.
 """
 
     EXTRA_TXT = """🛠️ 𝗔𝗗𝗠𝗜𝗡 𝗖𝗢𝗡𝗧𝗥𝗢𝗟 𝗣𝗔𝗡𝗘𝗟 · 𝟮/𝟮
@@ -254,8 +254,8 @@ Cᴏᴍᴍᴀɴᴅs Aɴᴅ Usᴀɢᴇ:
 • /clear_logs - ᴄʟᴇᴀʀ ᴛʜᴇ ᴍᴏᴠɪᴇ ᴜᴘᴅᴀᴛᴇ ʟᴏɢ.
 
 🔍 𝗙𝗜𝗟𝗧𝗘𝗥𝗦
-• /gfilter, /addg <code>&lt;keyword&gt; &lt;reply&gt;</code> - ᴀᴅᴅ ᴀ ɢʟᴏʙᴀʟ ғɪʟᴛᴇʀ.
-• /gfilters, /viewgfilters - ʟɪsᴛ ᴀʟʟ ɢʟᴏʙᴀʟ ғɪʟᴛᴇʀs.
+• /gfilter <code>&lt;keyword&gt; &lt;reply&gt;</code> - ᴀᴅᴅ ᴀ ɢʟᴏʙᴀʟ ғɪʟᴛᴇʀ.
+• /gfilters - ʟɪsᴛ ᴀʟʟ ɢʟᴏʙᴀʟ ғɪʟᴛᴇʀs.
 • /delg <code>&lt;keyword&gt;</code> - ᴅᴇʟᴇᴛᴇ ᴏɴᴇ ɢʟᴏʙᴀʟ ғɪʟᴛᴇʀ.
 • /delallg - ᴅᴇʟᴇᴛᴇ ᴀʟʟ ɢʟᴏʙᴀʟ ғɪʟᴛᴇʀs.
 • /del <code>&lt;keyword&gt;</code> - ᴅᴇʟᴇᴛᴇ ᴏɴᴇ ɢʀᴏᴜᴘ ғɪʟᴛᴇʀ.
@@ -301,8 +301,8 @@ Cᴏᴍᴍᴀɴᴅs Aɴᴅ Usᴀɢᴇ:
 • /setshortlinkoff - ᴅɪsᴀʙʟᴇ sʜᴏʀᴛʟɪɴᴋs ɪɴ ᴀ ɢʀᴏᴜᴘ.
 • /set_tutorial <code>&lt;link&gt;</code> - sᴇᴛ ᴀ sʜᴏʀᴛʟɪɴᴋ ᴛᴜᴛᴏʀɪᴀʟ.
 • /remove_tutorial - ʀᴇᴍᴏᴠᴇ ᴛʜᴇ ɢʀᴏᴜᴘ ᴛᴜᴛᴏʀɪᴀʟ.
-• /filter, /add <code>&lt;keyword&gt; &lt;reply&gt;</code> - ᴀᴅᴅ ᴀ ɢʀᴏᴜᴘ ғɪʟᴛᴇʀ.
-• /filters, /viewfilters - ʟɪsᴛ ᴛʜᴇ ɢʀᴏᴜᴘ's ғɪʟᴛᴇʀs.
+• /filter <code>&lt;keyword&gt; &lt;reply&gt;</code> - ᴀᴅᴅ ᴀ ɢʀᴏᴜᴘ ғɪʟᴛᴇʀ.
+• /filters - ʟɪsᴛ ᴛʜᴇ ɢʀᴏᴜᴘ's ғɪʟᴛᴇʀs.
 """
 
     STATUS_TXT = """<b>𝗗𝗕 𝟭 :- 
