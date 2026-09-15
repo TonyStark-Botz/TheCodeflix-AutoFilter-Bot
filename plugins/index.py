@@ -18,6 +18,11 @@ pending_index_requests = {}
 active_index_request = None
 
 
+def is_awaiting_index_skip(_, __, message):
+    request = pending_index_requests.get(message.from_user.id) if message.from_user else None
+    return bool(request and request.get("awaiting_skip"))
+
+
 def skip_summary(skip):
     return f"0-{skip - 1}" if skip else "none"
 
@@ -108,6 +113,7 @@ async def index_files(bot, query):
     & filters.text
     & filters.incoming
     & ~filters.regex(r"^[/#]")
+    & filters.create(is_awaiting_index_skip)
 )
 async def receive_index_skip(bot, message):
     pending = pending_index_requests.get(message.from_user.id)

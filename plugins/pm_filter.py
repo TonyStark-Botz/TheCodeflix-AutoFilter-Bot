@@ -213,7 +213,8 @@ async def pm_text(bot, message):
     # ON हो तो auto_filter चलाओ (PM में search), OFF हो तो purana redirect behavior
     pm_search = await db.pm_search_status()
     if pm_search:
-        return await auto_filter(bot, message)
+        await auto_filter(bot, message)
+        return
 
     await message.react(emoji="🔥", big=True)
     # Reply to the user
